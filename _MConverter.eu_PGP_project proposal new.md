@@ -104,7 +104,8 @@ This is the main entry point of the application used to run the program.
 
 This file contains the list of Python libraries required to run the project. 
 
-
+Setting up a GitHub Repository 
+https://github.com/gayatrilatke331-bit/Flood-Building-Detection/ is the repository URL.
 
 **5. Preliminary Task Distribution** **Member **
 
