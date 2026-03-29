@@ -613,14 +613,3 @@ if st.session_state.done:
 
 ---
 
-## `requirements.txt`
-```
-streamlit
-folium
-matplotlib
-geopandas
-shapely
-rasterio
-numpy
-opencv-python
-osmnx
