@@ -1,0 +1,9 @@
+streamlit
+folium
+matplotlib
+geopandas
+shapely
+rasterio
+numpy
+opencv-python
+osmnx
