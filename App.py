@@ -665,19 +665,27 @@ if rainfall_mm > 0:
             f"<div class='label'>Intensity</div>"
             f"<div class='value'>{r['intensity']}<span style='font-size:1rem'>mm/h</span></div>"
             f"<div class='sub'>Rate</div></div>", unsafe_allow_html=True)
+        risk_color = r['color']
+        risk_emoji = r['emoji']
+        risk_label = r['risk']
         rc4.markdown(
             f"<div class='metric-card rain-card'>"
             f"<div class='label'>Risk Level</div>"
-            f"<div class='value'>{r['emoji']}</div>"
-            f"<div class='sub' style='color:{r[\"color\"]};font-weight:700'>{r['risk']}</div>"
+            f"<div class='value'>{risk_emoji}</div>"
+            f"<div class='sub' style='color:{risk_color};font-weight:700'>{risk_label}</div>"
             f"</div>", unsafe_allow_html=True)
 
+        rain_color  = r['color']
+        rain_emoji  = r['emoji']
+        rain_risk   = r['risk']
+        rain_exp    = r['expected']
+        rain_advice = r['advice']
         st.markdown(
             f"<div class='rain-result'>"
-            f"<b>Risk Level:</b> <span style='color:{r['color']};font-weight:700'>{r['emoji']} {r['risk']}</span>"
+            f"<b>Risk Level:</b> <span style='color:{rain_color};font-weight:700'>{rain_emoji} {rain_risk}</span>"
             f" &nbsp;·&nbsp; "
-            f"<b>Expected Buildings Affected:</b> {r['expected']}<br><br>"
-            f"📋 <b>Advisory:</b> {r['advice']}</div>",
+            f"<b>Expected Buildings Affected:</b> {rain_exp}<br><br>"
+            f"📋 <b>Advisory:</b> {rain_advice}</div>",
             unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
