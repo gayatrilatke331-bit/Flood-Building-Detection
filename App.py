@@ -15,7 +15,6 @@ import matplotlib.patches as mpatches
 
 st.set_page_config(page_title="GeoFlood", page_icon="🌊", layout="wide")
 
-# ── CSS ───────────────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -74,7 +73,6 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Hero ──────────────────────────────────────────────────────────
 st.markdown("""
 <div class="hero">
     <h1>🌊 GeoFlood</h1>
@@ -85,7 +83,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Data functions ────────────────────────────────────────────────
+
 def dummy_flood_polygons():
     polys = [
         Polygon([(78.155,29.940),(78.175,29.940),
@@ -94,6 +92,7 @@ def dummy_flood_polygons():
                  (78.185,29.948),(78.170,29.948)]),
     ]
     return gpd.GeoDataFrame(geometry=polys, crs="EPSG:4326")
+
 
 def dummy_buildings():
     flood_blds = [
@@ -107,6 +106,7 @@ def dummy_buildings():
     return gpd.GeoDataFrame(
         geometry=flood_blds+safe_blds, crs="EPSG:4326")
 
+
 def dummy_flooded_buildings():
     blds = [
         box(78.156+i*0.003, 29.941, 78.158+i*0.003, 29.943)
@@ -114,7 +114,7 @@ def dummy_flooded_buildings():
     ]
     return gpd.GeoDataFrame(geometry=blds, crs="EPSG:4326")
 
-# ── Chart function ────────────────────────────────────────────────
+
 def impact_chart(total_buildings, flooded_buildings):
     safe = total_buildings - flooded_buildings
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
@@ -146,7 +146,7 @@ def impact_chart(total_buildings, flooded_buildings):
     plt.tight_layout()
     return fig
 
-# ── Risk level function ───────────────────────────────────────────
+
 def get_risk_level(building_geom, flood_gdf):
     try:
         total_area = building_geom.area
@@ -158,25 +158,27 @@ def get_risk_level(building_geom, flood_gdf):
                 intersection_area += building_geom.intersection(
                     flood_row.geometry).area
         pct = (intersection_area / total_area) * 100
-        if pct >= 70:   return "high"
-        elif pct >= 30: return "moderate"
-        elif pct > 0:   return "low"
-        else:           return "none"
+        if pct >= 70:
+            return "high"
+        elif pct >= 30:
+            return "moderate"
+        elif pct > 0:
+            return "low"
+        else:
+            return "none"
     except:
         return "low"
 
-# ── Map function ──────────────────────────────────────────────────
+
 def create_map(flood_gdf, buildings_gdf, flooded_gdf):
     center_lat = 29.9457
     center_lon = 78.1642
-
     m = folium.Map(
         location=[center_lat, center_lon],
         zoom_start=14,
         tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         attr="Esri World Imagery"
     )
-
     folium.TileLayer("OpenStreetMap", name="🗺️ OpenStreetMap").add_to(m)
     folium.TileLayer(
         tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
@@ -187,7 +189,6 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf):
         attr="Esri", name="🛰️ Satellite Map"
     ).add_to(m)
 
-    # Flood zone
     flood_layer = folium.FeatureGroup(name="🌊 Flood Zone", show=True)
     for idx, row in flood_gdf.iterrows():
         folium.GeoJson(
@@ -199,7 +200,6 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf):
         ).add_to(flood_layer)
     flood_layer.add_to(m)
 
-    # High risk zone
     high_zone = folium.FeatureGroup(name="🔴 High Risk Zone", show=True)
     for _, row in flood_gdf.iterrows():
         try:
@@ -216,7 +216,6 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf):
             pass
     high_zone.add_to(m)
 
-    # Moderate risk zone
     mod_zone = folium.FeatureGroup(name="🟡 Moderate Risk Zone", show=True)
     for _, row in flood_gdf.iterrows():
         try:
@@ -234,7 +233,6 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf):
             pass
     mod_zone.add_to(m)
 
-    # Low risk zone
     low_zone = folium.FeatureGroup(name="🟠 Low Risk Zone", show=True)
     for _, row in flood_gdf.iterrows():
         try:
@@ -253,7 +251,6 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf):
             pass
     low_zone.add_to(m)
 
-    # Safe buildings
     flooded_idx = set(flooded_gdf.index.tolist())
     safe_layer  = folium.FeatureGroup(name="🟢 Safe Buildings", show=True)
     for idx, row in buildings_gdf.iterrows():
@@ -274,7 +271,6 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf):
             ).add_to(safe_layer)
     safe_layer.add_to(m)
 
-    # Flooded buildings
     high_bld = folium.FeatureGroup(name="🔴 High Risk Buildings", show=True)
     mod_bld  = folium.FeatureGroup(name="🟡 Moderate Risk Buildings", show=True)
     low_bld  = folium.FeatureGroup(name="🟠 Low Risk Buildings", show=True)
@@ -292,20 +288,18 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf):
         }.get(risk, ("#ff7700","#cc5500","🟠 LOW RISK","darkorange",
                      low_bld,"ℹ️ Stay alert"))
         fill, border, label, color, target, action = cfg
-
-        popup = folium.Popup(f"""
-        <div style='font-family:Arial;width:210px;padding:6px'>
-            <h4 style='color:{color};margin:0 0 6px'>{label}</h4>
-            <hr style='margin:4px 0'>
-            <b>Building:</b> #{i+1}<br>
-            <b>Risk:</b> <span style='color:{color};font-weight:700'>
-                {risk.upper()}</span><br>
-            <b>Lat:</b> {c.y:.5f}<br>
-            <b>Lon:</b> {c.x:.5f}<br>
-            <hr style='margin:4px 0'>
-            <b>Action:</b> {action}
-        </div>""", max_width=230)
-
+        popup = folium.Popup(
+            f"<div style='font-family:Arial;width:210px;padding:6px'>"
+            f"<h4 style='color:{color};margin:0 0 6px'>{label}</h4>"
+            f"<hr style='margin:4px 0'>"
+            f"<b>Building:</b> #{i+1}<br>"
+            f"<b>Risk:</b> <span style='color:{color};font-weight:700'>"
+            f"{risk.upper()}</span><br>"
+            f"<b>Lat:</b> {c.y:.5f}<br>"
+            f"<b>Lon:</b> {c.x:.5f}<br>"
+            f"<hr style='margin:4px 0'>"
+            f"<b>Action:</b> {action}</div>",
+            max_width=230)
         folium.GeoJson(
             row.geometry.__geo_interface__,
             style_function=lambda x, f=fill, b=border: {
@@ -324,7 +318,6 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf):
     mod_bld.add_to(m)
     low_bld.add_to(m)
 
-    # Water flow arrows
     flow_layer = folium.FeatureGroup(name="💧 Water Flow", show=True)
     bounds = flood_gdf.total_bounds
     minx, miny, maxx, maxy = bounds
@@ -349,32 +342,31 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf):
             ).add_to(flow_layer)
     flow_layer.add_to(m)
 
-    # Legend
-    legend = """
-    <div style="position:fixed;bottom:30px;right:8px;
-        background:rgba(5,10,20,0.93);border-radius:12px;
-        padding:14px 18px;z-index:9999;color:white;
-        font-family:Arial;font-size:12px;
-        border:1px solid #2a2a3a;min-width:195px;">
-        <b style="font-size:13px">🗺️ Map Legend</b>
-        <hr style="margin:7px 0;border-color:#2a2a3a">
-        <b style="font-size:11px;color:#aaa">ZONES</b><br>
-        <span style="color:#0055ff">██</span> Flood Zone<br>
-        <span style="color:#ff0000">██</span> High Risk Core<br>
-        <span style="color:#ffcc00">██</span> Moderate Risk Zone<br>
-        <span style="color:#ff8800">██</span> Low Risk Zone<br>
-        <hr style="margin:7px 0;border-color:#2a2a3a">
-        <b style="font-size:11px;color:#aaa">BUILDINGS</b><br>
-        <span style="color:#ff2222">●</span> High Risk<br>
-        <span style="color:#ffbb00">●</span> Moderate Risk<br>
-        <span style="color:#ff7700">●</span> Low Risk<br>
-        <span style="color:#00dd77">■</span> Safe<br>
-        <hr style="margin:7px 0;border-color:#2a2a3a">
-        <span style="color:#00eeff">▼</span> Water Flow<br>
-        <hr style="margin:7px 0;border-color:#2a2a3a">
-        <small style="color:#888">Click buildings for details<br>
-        Top-right: switch map layers</small>
-    </div>"""
+    legend = (
+        "<div style='position:fixed;bottom:30px;right:8px;"
+        "background:rgba(5,10,20,0.93);border-radius:12px;"
+        "padding:14px 18px;z-index:9999;color:white;"
+        "font-family:Arial;font-size:12px;"
+        "border:1px solid #2a2a3a;min-width:195px;'>"
+        "<b style='font-size:13px'>🗺️ Map Legend</b>"
+        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
+        "<b style='font-size:11px;color:#aaa'>ZONES</b><br>"
+        "<span style='color:#0055ff'>██</span> Flood Zone<br>"
+        "<span style='color:#ff0000'>██</span> High Risk Core<br>"
+        "<span style='color:#ffcc00'>██</span> Moderate Risk Zone<br>"
+        "<span style='color:#ff8800'>██</span> Low Risk Zone<br>"
+        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
+        "<b style='font-size:11px;color:#aaa'>BUILDINGS</b><br>"
+        "<span style='color:#ff2222'>●</span> High Risk<br>"
+        "<span style='color:#ffbb00'>●</span> Moderate Risk<br>"
+        "<span style='color:#ff7700'>●</span> Low Risk<br>"
+        "<span style='color:#00dd77'>■</span> Safe<br>"
+        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
+        "<span style='color:#00eeff'>▼</span> Water Flow<br>"
+        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
+        "<small style='color:#888'>Click buildings for details<br>"
+        "Top-right: switch map layers</small></div>"
+    )
     m.get_root().html.add_child(folium.Element(legend))
     plugins.Fullscreen(position="topleft").add_to(m)
     plugins.MiniMap(toggle_display=True, position="bottomleft",
@@ -383,24 +375,29 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf):
     folium.LayerControl(position="topright", collapsed=False).add_to(m)
     return m
 
-# ── Rainfall function ─────────────────────────────────────────────
+
 def analyse_rainfall(mm, hours):
     intensity = mm/hours if hours > 0 else 0
-    if mm == 0:    return None
-    if mm < 25:    return {"risk":"Low",     "emoji":"🟢","color":"#2ecc71",
-        "advice":"Light rainfall. Minimal flood risk.",
-        "expected":"< 5%","intensity":round(intensity,2)}
-    elif mm < 65:  return {"risk":"Moderate","emoji":"🟡","color":"#f39c12",
-        "advice":"Some low-lying areas may experience waterlogging.",
-        "expected":"5%–20%","intensity":round(intensity,2)}
-    elif mm < 115: return {"risk":"High",    "emoji":"🔴","color":"#e74c3c",
-        "advice":"Heavy rainfall! Significant flood risk.",
-        "expected":"20%–50%","intensity":round(intensity,2)}
-    else:          return {"risk":"Extreme", "emoji":"🚨","color":"#c0392b",
-        "advice":"Extreme rainfall! Immediate evacuation advised.",
-        "expected":"> 50%","intensity":round(intensity,2)}
+    if mm == 0:
+        return None
+    if mm < 25:
+        return {"risk":"Low","emoji":"🟢","color":"#2ecc71",
+                "advice":"Light rainfall. Minimal flood risk.",
+                "expected":"< 5%","intensity":round(intensity,2)}
+    elif mm < 65:
+        return {"risk":"Moderate","emoji":"🟡","color":"#f39c12",
+                "advice":"Some low-lying areas may experience waterlogging.",
+                "expected":"5% to 20%","intensity":round(intensity,2)}
+    elif mm < 115:
+        return {"risk":"High","emoji":"🔴","color":"#e74c3c",
+                "advice":"Heavy rainfall! Significant flood risk.",
+                "expected":"20% to 50%","intensity":round(intensity,2)}
+    else:
+        return {"risk":"Extreme","emoji":"🚨","color":"#c0392b",
+                "advice":"Extreme rainfall! Immediate evacuation advised.",
+                "expected":"> 50%","intensity":round(intensity,2)}
 
-# ── Sidebar ───────────────────────────────────────────────────────
+
 with st.sidebar:
     st.markdown("## 🛰️ Analysis Controls")
     st.markdown("---")
@@ -413,7 +410,7 @@ with st.sidebar:
     with st.expander("⚙️ Detection Settings", expanded=False):
         ndwi_threshold = st.slider("NDWI Threshold", 0.0, 1.0, 0.2, 0.05)
     with st.expander("🌧️ Rainfall Analysis", expanded=True):
-        rainfall_mm    = st.number_input(
+        rainfall_mm = st.number_input(
             "Rainfall amount (mm)",
             min_value=0.0, max_value=1000.0, value=0.0, step=10.0)
         rainfall_hours = st.slider("Duration (hours)", 1, 72, 24)
@@ -421,80 +418,76 @@ with st.sidebar:
     run_btn = st.button("🚀 Run Full Analysis", type="primary",
                         use_container_width=True)
     st.markdown("---")
-    st.markdown("""
-    <div style='color:gray;font-size:0.72rem;text-align:center'>
-        GeoFlood v1.0<br>Dinesh · Likhitha · Gayatri
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        "<div style='color:gray;font-size:0.72rem;text-align:center'>"
+        "GeoFlood v1.0<br>Dinesh · Likhitha · Gayatri</div>",
+        unsafe_allow_html=True)
 
-# ── Rainfall section ──────────────────────────────────────────────
 if rainfall_mm > 0:
     r = analyse_rainfall(rainfall_mm, rainfall_hours)
     if r:
-        st.markdown("""
-        <div class="section-box">
-            <div class="section-title">🌧️ Rainfall Risk Assessment</div>
-        </div>""", unsafe_allow_html=True)
-        rc1,rc2,rc3,rc4 = st.columns(4)
-        rc1.markdown(f"""<div class="metric-card rain-card">
-            <div class="label">Rainfall</div>
-            <div class="value">{rainfall_mm}mm</div>
-            <div class="sub">Total amount</div></div>""",
+        st.markdown(
+            "<div class='section-box'>"
+            "<div class='section-title'>🌧️ Rainfall Risk Assessment</div>"
+            "</div>", unsafe_allow_html=True)
+        rc1, rc2, rc3, rc4 = st.columns(4)
+        rc1.markdown(
+            f"<div class='metric-card rain-card'>"
+            f"<div class='label'>Rainfall</div>"
+            f"<div class='value'>{rainfall_mm}mm</div>"
+            f"<div class='sub'>Total amount</div></div>",
             unsafe_allow_html=True)
-        rc2.markdown(f"""<div class="metric-card rain-card">
-            <div class="label">Duration</div>
-            <div class="value">{rainfall_hours}h</div>
-            <div class="sub">Hours</div></div>""",
+        rc2.markdown(
+            f"<div class='metric-card rain-card'>"
+            f"<div class='label'>Duration</div>"
+            f"<div class='value'>{rainfall_hours}h</div>"
+            f"<div class='sub'>Hours</div></div>",
             unsafe_allow_html=True)
-        rc3.markdown(f"""<div class="metric-card rain-card">
-            <div class="label">Intensity</div>
-            <div class="value">{r['intensity']}</div>
-            <div class="sub">mm/hour</div></div>""",
+        rc3.markdown(
+            f"<div class='metric-card rain-card'>"
+            f"<div class='label'>Intensity</div>"
+            f"<div class='value'>{r['intensity']}</div>"
+            f"<div class='sub'>mm/hour</div></div>",
             unsafe_allow_html=True)
-        rc4.markdown(f"""<div class="metric-card rain-card">
-            <div class="label">Risk Level</div>
-            <div class="value">{r['emoji']}</div>
-            <div class="sub" style="color:{r['color']}">{r['risk']}</div>
-            </div>""", unsafe_allow_html=True)
-        st.markdown(f"""
-        <div class="rain-result">
-            <b>Risk:</b>
-            <span style="color:{r['color']};font-weight:700">
-                {r['emoji']} {r['risk']}
-            </span> &nbsp;|&nbsp;
-            <b>Expected buildings affected:</b> {r['expected']}<br><br>
-            📋 <b>Advisory:</b> {r['advice']}
-        </div>""", unsafe_allow_html=True)
+        rc4.markdown(
+            f"<div class='metric-card rain-card'>"
+            f"<div class='label'>Risk Level</div>"
+            f"<div class='value'>{r['emoji']}</div>"
+            f"<div class='sub' style='color:{r['color']}'>{r['risk']}</div>"
+            f"</div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='rain-result'>"
+            f"<b>Risk:</b> "
+            f"<span style='color:{r['color']};font-weight:700'>"
+            f"{r['emoji']} {r['risk']}</span>"
+            f" &nbsp;|&nbsp; "
+            f"<b>Expected buildings affected:</b> {r['expected']}<br><br>"
+            f"📋 <b>Advisory:</b> {r['advice']}</div>",
+            unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Session state ─────────────────────────────────────────────────
 if "done" not in st.session_state:
     st.session_state.done = False
 
-# ── Run Analysis ──────────────────────────────────────────────────
 if run_btn:
     if not uploaded_file or not place_name:
         st.warning("⚠️ Upload a GeoTIFF and enter a location name.")
         st.stop()
-
     with tempfile.NamedTemporaryFile(delete=False, suffix=".tif") as tmp:
         tmp.write(uploaded_file.read())
         tmp_path = tmp.name
-
     try:
         with st.spinner("🛰️ Processing satellite image..."):
             flood_gdf     = dummy_flood_polygons()
         with st.spinner("🗺️ Fetching buildings from OpenStreetMap..."):
             buildings_gdf = dummy_buildings()
             flooded_gdf   = dummy_flooded_buildings()
-
         total   = len(buildings_gdf)
         flooded = len(flooded_gdf)
         pct     = round((flooded/total)*100,1) if total else 0
         safe    = total - flooded
-
         m        = create_map(flood_gdf, buildings_gdf, flooded_gdf)
         map_html = m._repr_html_()
-
         st.session_state.done     = True
         st.session_state.total    = total
         st.session_state.flooded  = flooded
@@ -505,111 +498,91 @@ if run_btn:
     finally:
         os.unlink(tmp_path)
 
-# ── Results ───────────────────────────────────────────────────────
 if st.session_state.done:
     total   = st.session_state.total
     flooded = st.session_state.flooded
     pct     = st.session_state.pct
     safe    = st.session_state.safe
 
-    # Metrics
-    st.markdown("""
-    <div class="section-box">
-        <div class="section-title">📊 Impact Metrics</div>
-    </div>""", unsafe_allow_html=True)
-    m1,m2,m3 = st.columns(3)
-    m1.markdown(f"""<div class="metric-card total-card">
-        <div class="label">Total Buildings</div>
-        <div class="value">{total}</div>
-        <div class="sub">In selected area</div></div>""",
+    st.markdown(
+        "<div class='section-box'>"
+        "<div class='section-title'>📊 Impact Metrics</div>"
+        "</div>", unsafe_allow_html=True)
+    m1, m2, m3 = st.columns(3)
+    m1.markdown(
+        f"<div class='metric-card total-card'>"
+        f"<div class='label'>Total Buildings</div>"
+        f"<div class='value'>{total}</div>"
+        f"<div class='sub'>In selected area</div></div>",
         unsafe_allow_html=True)
-    m2.markdown(f"""<div class="metric-card flood-card">
-        <div class="label">Flooded Buildings</div>
-        <div class="value">{flooded}</div>
-        <div class="sub" style="color:#e74c3c">{pct}% affected</div>
-        </div>""", unsafe_allow_html=True)
-    m3.markdown(f"""<div class="metric-card safe-card">
-        <div class="label">Safe Buildings</div>
-        <div class="value">{safe}</div>
-        <div class="sub" style="color:#2ecc71">{100-pct}% safe</div>
-        </div>""", unsafe_allow_html=True)
+    m2.markdown(
+        f"<div class='metric-card flood-card'>"
+        f"<div class='label'>Flooded Buildings</div>"
+        f"<div class='value'>{flooded}</div>"
+        f"<div class='sub' style='color:#e74c3c'>{pct}% affected</div>"
+        f"</div>", unsafe_allow_html=True)
+    m3.markdown(
+        f"<div class='metric-card safe-card'>"
+        f"<div class='label'>Safe Buildings</div>"
+        f"<div class='value'>{safe}</div>"
+        f"<div class='sub' style='color:#2ecc71'>{100-pct}% safe</div>"
+        f"</div>", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Risk summary
-    st.markdown("""
-    <div class="section-box">
-        <div class="section-title">⚠️ Risk Classification Summary</div>
-        <div style="color:#ccc;font-size:0.88rem;line-height:2">
-            <span class="risk-badge badge-high">🔴 High Risk</span>
-            Buildings &gt;70% inside flood zone — Immediate evacuation<br>
-            <span class="risk-badge badge-moderate">🟡 Moderate Risk</span>
-            Buildings 30–70% inside flood zone — Monitor closely<br>
-            <span class="risk-badge badge-low">🟠 Low Risk</span>
-            Buildings &lt;30% inside flood zone — Stay alert<br>
-            <span class="risk-badge badge-safe">🟢 Safe</span>
-            Buildings outside flood zone — No immediate action
-        </div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='section-box'>"
+        "<div class='section-title'>⚠️ Risk Classification Summary</div>"
+        "<div style='color:#ccc;font-size:0.88rem;line-height:2'>"
+        "<span class='risk-badge badge-high'>🔴 High Risk</span>"
+        " Buildings over 70% inside flood zone — Immediate evacuation<br>"
+        "<span class='risk-badge badge-moderate'>🟡 Moderate Risk</span>"
+        " Buildings 30 to 70% inside flood zone — Monitor closely<br>"
+        "<span class='risk-badge badge-low'>🟠 Low Risk</span>"
+        " Buildings under 30% inside flood zone — Stay alert<br>"
+        "<span class='risk-badge badge-safe'>🟢 Safe</span>"
+        " Buildings outside flood zone — No immediate action"
+        "</div></div>", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Map + Chart
-    st.markdown("""
-    <div class="section-title" style="color:white;font-size:1.1rem;
-    font-weight:700;padding-left:12px;border-left:3px solid #1a6bff">
-        🗺️ Interactive Flood Map
-        <small style="font-size:0.75rem;opacity:0.6;font-weight:400">
-        &nbsp;&nbsp;Switch layers: Satellite / Street / Terrain
-        </small>
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='section-title' style='color:white;font-size:1.1rem;"
+        "font-weight:700;padding-left:12px;border-left:3px solid #1a6bff'>"
+        "🗺️ Interactive Flood Map"
+        "<small style='font-size:0.75rem;opacity:0.6;font-weight:400'>"
+        " &nbsp;&nbsp;Switch layers: Satellite / Street / Terrain"
+        "</small></div>", unsafe_allow_html=True)
 
     map_col, info_col = st.columns([3,2])
     with map_col:
         st.components.v1.html(st.session_state.map_html, height=480)
-
     with info_col:
-        st.markdown("""
-        <div class="section-title" style="color:white;
-        font-size:1rem;font-weight:700">📈 Impact Summary</div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            "<div class='section-title' style='color:white;"
+            "font-size:1rem;font-weight:700'>📈 Impact Summary</div>",
+            unsafe_allow_html=True)
         fig = impact_chart(total, flooded)
         st.pyplot(fig)
-        st.markdown("""
-        <div class="section-box" style="margin-top:12px">
-          <div style="color:#ccc;font-size:0.83rem">
-            <b style="color:white">📋 How to use the map:</b><br>
-            <div class="step-box">
-                1️⃣ Top-right: switch Satellite / Street / Terrain
-            </div>
-            <div class="step-box">
-                2️⃣ Click red/orange buildings for risk details
-            </div>
-            <div class="step-box">
-                3️⃣ Toggle layers on/off with checkboxes
-            </div>
-            <div class="step-box">
-                4️⃣ Fullscreen button (top-left) for better view
-            </div>
-            <div class="step-box">
-                5️⃣ Mini-map (bottom-left) shows your position
-            </div>
-          </div>
-        </div>""", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='section-box' style='margin-top:12px'>"
+            "<div style='color:#ccc;font-size:0.83rem'>"
+            "<b style='color:white'>📋 How to use the map:</b><br>"
+            "<div class='step-box'>1️⃣ Top-right: switch Satellite / Street / Terrain</div>"
+            "<div class='step-box'>2️⃣ Click red/orange buildings for risk details</div>"
+            "<div class='step-box'>3️⃣ Toggle layers on/off with checkboxes</div>"
+            "<div class='step-box'>4️⃣ Fullscreen button (top-left) for better view</div>"
+            "<div class='step-box'>5️⃣ Mini-map (bottom-left) shows your position</div>"
+            "</div></div>", unsafe_allow_html=True)
 
-    st.markdown(f"""
-    <div class="info-banner">
-        ✅ <b>Analysis complete!</b> —
-        Location: <b>{st.session_state.place}</b> |
-        {total} buildings scanned |
-        {flooded} flooded ({pct}%) |
-        {safe} safe ({100-pct}%)<br>
-        <small style="opacity:0.7">
-            Currently using dummy data.
-            Connect real Sentinel-2 image for production results.
-        </small>
-    </div>""", unsafe_allow_html=True)
-```
-
----
-
+    st.markdown(
+        f"<div class='info-banner'>"
+        f"✅ <b>Analysis complete!</b> — "
+        f"Location: <b>{st.session_state.place}</b> | "
+        f"{total} buildings scanned | "
+        f"{flooded} flooded ({pct}%) | "
+        f"{safe} safe ({100-pct}%)<br>"
+        f"<small style='opacity:0.7'>"
+        f"Currently using dummy data. "
+        f"Connect real Sentinel-2 image for production results."
+        f"</small></div>", unsafe_allow_html=True)
