@@ -1,10 +1,10 @@
 streamlit
-folium
-matplotlib
 geopandas
+folium
+streamlit-folium
 shapely
-rasterio
+fiona
+pyproj
+rtree
 numpy
-opencv-python
-osmnx
-requests
+pandas
