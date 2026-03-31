@@ -622,68 +622,179 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
     )
     m.get_root().html.add_child(folium.Element(legend))
 
-    # ── FIX: use HTML entities instead of \u escapes ──────────────
+    # ── Clean white-panel checkbox toggle (image-2 style) ─────────
     toggle_js = """
-    <div id="layer-toggles" style="
-        position:fixed; top:10px; left:50%; transform:translateX(-50%);
-        z-index:9999; display:flex; flex-wrap:wrap; gap:5px;
-        background:rgba(5,10,20,0.88); padding:8px 12px;
-        border-radius:10px; border:1px solid #2a2a3a; max-width:90vw;">
-      <span style="color:#aaa;font-size:10px;width:100%;margin-bottom:2px;font-family:Arial">&#127897; Layer Toggles</span>
-      <button onclick="tog(this,'Flood Zone')"              style="background:#0055ff33;color:#4d9fff;border:1.5px solid #0055ff;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#127754; Flood</button>
-      <button onclick="tog(this,'High Risk Zone')"          style="background:#ff000033;color:#ff5555;border:1.5px solid #ff2222;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128308; High Zone</button>
-      <button onclick="tog(this,'Moderate Risk Zone')"      style="background:#ffcc0033;color:#ffcc00;border:1.5px solid #ffcc00;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128993; Mod Zone</button>
-      <button onclick="tog(this,'Low Risk Zone')"           style="background:#ff880033;color:#ff9933;border:1.5px solid #ff8800;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128992; Low Zone</button>
-      <button onclick="tog(this,'Safe Buildings')"          style="background:#00dd7733;color:#00dd77;border:1.5px solid #00dd77;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128994; Safe</button>
-      <button onclick="tog(this,'High Risk Buildings')"     style="background:#ff222233;color:#ff7777;border:1.5px solid #ff4444;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128308; High Bldgs</button>
-      <button onclick="tog(this,'Moderate Risk Buildings')" style="background:#ffbb0033;color:#ffbb00;border:1.5px solid #ffbb00;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128993; Mod Bldgs</button>
-      <button onclick="tog(this,'Low Risk Buildings')"      style="background:#ff770033;color:#ff9944;border:1.5px solid #ff7700;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128992; Low Bldgs</button>
-      <button onclick="tog(this,'Water Flow Direction')"    style="background:#00eeff22;color:#00eeff;border:1.5px solid #00eeff;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128167; Flow</button>
-      <button onclick="setAll(true)"  style="background:#ffffff15;color:#fff;border:1.5px solid #ffffff44;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#9989; All</button>
-      <button onclick="setAll(false)" style="background:#00000033;color:#aaa;border:1.5px solid #55555588;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128683; None</button>
+    <style>
+    #ltc-panel {
+        position: fixed;
+        top: 80px;
+        right: 10px;
+        z-index: 9999;
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+    }
+    #ltc-toggle-btn {
+        background: white;
+        border: 2px solid #ccc;
+        border-radius: 4px 4px 0 0;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: bold;
+        color: #333;
+        display: block;
+        width: 100%;
+        text-align: left;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.3);
+    }
+    #ltc-toggle-btn:hover { background: #f4f4f4; }
+    #ltc-body {
+        background: white;
+        border: 2px solid #ccc;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        padding: 6px 12px 10px 12px;
+        min-width: 220px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        max-height: 420px;
+        overflow-y: auto;
+    }
+    .ltc-row {
+        display: flex;
+        align-items: center;
+        padding: 3px 2px;
+        cursor: pointer;
+        user-select: none;
+        color: #222;
+        font-size: 13px;
+        border-radius: 3px;
+    }
+    .ltc-row:hover { background: #f0f4ff; }
+    .ltc-row input[type=checkbox] {
+        margin-right: 7px;
+        width: 14px;
+        height: 14px;
+        cursor: pointer;
+        accent-color: #1a6bff;
+    }
+    .ltc-dot {
+        width: 11px; height: 11px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 7px;
+        flex-shrink: 0;
+        border: 1px solid rgba(0,0,0,0.15);
+    }
+    .ltc-sq {
+        width: 11px; height: 11px;
+        border-radius: 2px;
+        display: inline-block;
+        margin-right: 7px;
+        flex-shrink: 0;
+        border: 1px solid rgba(0,0,0,0.15);
+    }
+    .ltc-section {
+        font-size: 10px;
+        font-weight: bold;
+        color: #888;
+        margin: 8px 0 2px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 2px;
+    }
+    </style>
+
+    <div id="ltc-panel">
+      <button id="ltc-toggle-btn" onclick="togglePanel()">&#9776; Layers &#9660;</button>
+      <div id="ltc-body">
+
+        <div class="ltc-section">Zones</div>
+
+        <label class="ltc-row">
+          <input type="checkbox" checked onchange="togLayer(this,'Flood Zone')">
+          <span class="ltc-sq" style="background:#0055ff;opacity:0.75"></span> Flood Zone
+        </label>
+        <label class="ltc-row">
+          <input type="checkbox" checked onchange="togLayer(this,'High Risk Zone')">
+          <span class="ltc-sq" style="background:#ff0000;opacity:0.75"></span> High Risk Zone
+        </label>
+        <label class="ltc-row">
+          <input type="checkbox" checked onchange="togLayer(this,'Moderate Risk Zone')">
+          <span class="ltc-sq" style="background:#ffcc00"></span> Moderate Risk Zone
+        </label>
+        <label class="ltc-row">
+          <input type="checkbox" checked onchange="togLayer(this,'Low Risk Zone')">
+          <span class="ltc-sq" style="background:#ff8800;opacity:0.85"></span> Low Risk Zone
+        </label>
+
+        <div class="ltc-section">Buildings</div>
+
+        <label class="ltc-row">
+          <input type="checkbox" checked onchange="togLayer(this,'Safe Buildings')">
+          <span class="ltc-dot" style="background:#00dd77"></span> Safe Buildings
+        </label>
+        <label class="ltc-row">
+          <input type="checkbox" checked onchange="togLayer(this,'High Risk Buildings')">
+          <span class="ltc-dot" style="background:#ff2222"></span> High Risk Buildings
+        </label>
+        <label class="ltc-row">
+          <input type="checkbox" checked onchange="togLayer(this,'Moderate Risk Buildings')">
+          <span class="ltc-dot" style="background:#ffbb00"></span> Moderate Risk Buildings
+        </label>
+        <label class="ltc-row">
+          <input type="checkbox" checked onchange="togLayer(this,'Low Risk Buildings')">
+          <span class="ltc-dot" style="background:#ff7700"></span> Low Risk Buildings
+        </label>
+
+        <div class="ltc-section">Other</div>
+
+        <label class="ltc-row">
+          <input type="checkbox" checked onchange="togLayer(this,'Water Flow Direction')">
+          <span class="ltc-dot" style="background:#00eeff;border-color:#00aacc"></span> Water Flow Direction
+        </label>
+
+      </div>
     </div>
 
     <script>
+    var ltcOpen = true;
+
+    function togglePanel() {
+      ltcOpen = !ltcOpen;
+      var body = document.getElementById('ltc-body');
+      var btn  = document.getElementById('ltc-toggle-btn');
+      body.style.display = ltcOpen ? 'block' : 'none';
+      btn.style.borderRadius = ltcOpen ? '4px 4px 0 0' : '4px';
+      btn.innerHTML = ltcOpen
+        ? '&#9776; Layers &#9660;'
+        : '&#9776; Layers &#9658;';
+    }
+
     function getLeafletMap() {
       for (var k in window) {
         try {
-          if (window[k] && window[k]._layers && typeof window[k].eachLayer === 'function') return window[k];
+          if (window[k] && window[k]._layers &&
+              typeof window[k].eachLayer === 'function') return window[k];
         } catch(e) {}
       }
       return null;
     }
 
-    function tog(btn, layerName) {
+    function togLayer(chk, layerName) {
       var lmap = getLeafletMap();
       if (!lmap) return;
-      var isOff = btn.style.opacity === '0.3';
-      btn.style.opacity = isOff ? '1' : '0.3';
-
+      var show = chk.checked;
       lmap.eachLayer(function(layer) {
         if (layer.options && layer.options.name) {
-          var name = layer.options.name.replace(/[^\\x00-\\x7F]/g, '').trim();
-          var target = layerName.replace(/[^\\x00-\\x7F]/g, '').trim();
-          if (name.indexOf(target) !== -1 || target.indexOf(name) !== -1) {
-            if (isOff) { lmap.addLayer(layer); }
-            else { lmap.removeLayer(layer); }
+          var n = layer.options.name.replace(/[^\\x00-\\x7F]/g, '').trim();
+          var t = layerName.replace(/[^\\x00-\\x7F]/g, '').trim();
+          if (n.indexOf(t) !== -1 || t.indexOf(n) !== -1) {
+            try {
+              if (show) { lmap.addLayer(layer); }
+              else      { lmap.removeLayer(layer); }
+            } catch(e) {}
           }
-        }
-      });
-    }
-
-    function setAll(visible) {
-      var lmap = getLeafletMap();
-      if (!lmap) return;
-      var btns = document.querySelectorAll('#layer-toggles button');
-      for (var i = 0; i < btns.length; i++) {
-        btns[i].style.opacity = visible ? '1' : '0.3';
-      }
-      lmap.eachLayer(function(layer) {
-        if (layer.options && layer.options.name) {
-          try {
-            if (visible) { lmap.addLayer(layer); }
-            else { lmap.removeLayer(layer); }
-          } catch(e) {}
         }
       });
     }
