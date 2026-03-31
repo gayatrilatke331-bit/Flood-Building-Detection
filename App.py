@@ -567,29 +567,26 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
     flow_layer.add_to(m)
 
     legend = (
-        "<div style='position:fixed;bottom:30px;right:8px;"
-        "background:rgba(5,10,20,0.93);border-radius:12px;"
-        "padding:14px 18px;z-index:9999;color:white;"
-        "font-family:Arial;font-size:12px;"
-        "border:1px solid #2a2a3a;min-width:200px;'>"
-        "<b style='font-size:13px'>🗺️ Map Legend</b>"
-        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
-        "<b style='font-size:11px;color:#aaa'>ZONES</b><br>"
+        "<div style='position:fixed;bottom:20px;right:6px;"
+        "background:rgba(5,10,20,0.88);border-radius:8px;"
+        "padding:7px 10px;z-index:9999;color:white;"
+        "font-family:Arial;font-size:10px;"
+        "border:1px solid #2a2a3a;min-width:130px;line-height:1.6'>"
+        "<b style='font-size:10px'>🗺️ Legend</b>"
+        "<hr style='margin:4px 0;border-color:#2a2a3a'>"
+        "<b style='font-size:9px;color:#aaa'>ZONES</b><br>"
         "<span style='color:#0055ff'>██</span> Flood Zone<br>"
-        "<span style='color:#ff0000'>██</span> High Risk Core<br>"
+        "<span style='color:#ff0000'>██</span> High Risk<br>"
         "<span style='color:#ffcc00'>██</span> Moderate Risk<br>"
-        "<span style='color:#ff8800'>██</span> Low Risk Zone<br>"
-        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
-        "<b style='font-size:11px;color:#aaa'>BUILDINGS</b><br>"
+        "<span style='color:#ff8800'>██</span> Low Risk<br>"
+        "<hr style='margin:4px 0;border-color:#2a2a3a'>"
+        "<b style='font-size:9px;color:#aaa'>BUILDINGS</b><br>"
         "<span style='color:#ff2222'>●</span> High Risk<br>"
-        "<span style='color:#ffbb00'>●</span> Moderate Risk<br>"
+        "<span style='color:#ffbb00'>●</span> Moderate<br>"
         "<span style='color:#ff7700'>●</span> Low Risk<br>"
         "<span style='color:#00dd77'>■</span> Safe<br>"
-        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
-        "<span style='color:#00eeff'>▼</span> Water Flow<br>"
-        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
-        "<small style='color:#888'>Click buildings for details<br>"
-        "Top-right: switch map layers</small></div>"
+        "<hr style='margin:4px 0;border-color:#2a2a3a'>"
+        "<span style='color:#00eeff'>▼</span> Water Flow</div>"
     )
     m.get_root().html.add_child(folium.Element(legend))
     plugins.Fullscreen(position="topleft").add_to(m)
@@ -819,27 +816,18 @@ if st.session_state.done:
         " &nbsp;&nbsp;Real OSM data — Switch: Satellite / Street / Terrain"
         "</small></div>", unsafe_allow_html=True)
 
-    map_col, info_col = st.columns([3,2])
-    with map_col:
-        st.components.v1.html(
-            st.session_state.map_html, height=500)
-    with info_col:
-        st.markdown(
-            "<div class='section-title' style='color:white;"
-            "font-size:1rem;font-weight:700'>📈 Impact Summary</div>",
-            unsafe_allow_html=True)
-        fig = impact_chart(total, flooded)
-        st.pyplot(fig)
-        st.markdown(
-            "<div class='section-box' style='margin-top:12px'>"
-            "<div style='color:#ccc;font-size:0.83rem'>"
-            "<b style='color:white'>📋 How to use:</b><br>"
-            "<div class='step-box'>1️⃣ Switch Satellite / Street / Terrain</div>"
-            "<div class='step-box'>2️⃣ Click buildings for risk details</div>"
-            "<div class='step-box'>3️⃣ Toggle layers with checkboxes</div>"
-            "<div class='step-box'>4️⃣ Fullscreen button top-left</div>"
-            "<div class='step-box'>5️⃣ Mini-map bottom-left for position</div>"
-            "</div></div>", unsafe_allow_html=True)
+    st.components.v1.html(
+        st.session_state.map_html, height=560)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    st.markdown(
+        "<div class='section-title' style='color:white;font-size:1.1rem;"
+        "font-weight:700;padding-left:12px;border-left:3px solid #1a6bff'>"
+        "📈 Impact Summary</div>", unsafe_allow_html=True)
+
+    fig = impact_chart(total, flooded)
+    st.pyplot(fig)
 
     st.markdown(
         f"<div class='info-banner'>"
