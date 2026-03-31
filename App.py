@@ -188,60 +188,49 @@ UTTARAKHAND_LOCATIONS = {
 # ── Fetch real buildings from OSM ─────────────────────────────────
 @st.cache_data(ttl=3600, show_spinner=False)
 def fetch_real_buildings(place_name, bbox):
-    try:
-        minx, miny, maxx, maxy = bbox
-        overpass_url = "https://overpass-api.de/api/interpreter"
-        query = f"""
-        [out:json][timeout:60];
-        (
-          way["building"]({miny},{minx},{maxy},{maxx});
-          way["building:part"]({miny},{minx},{maxy},{maxx});
-          relation["building"]({miny},{minx},{maxy},{maxx});
-          way["amenity"]({miny},{minx},{maxy},{maxx});
-          way["landuse"="residential"]({miny},{minx},{maxy},{maxx});
-        );
-        out geom;
-        """
-        response = requests.post(
-            overpass_url,
-            data={"data": query},
-            timeout=60
-        )
-        data = response.json()
-        buildings = []
-        for element in data.get("elements", []):
-            if element.get("type") == "way":
-                coords = [(n["lon"], n["lat"])
-                          for n in element.get("geometry", [])]
-                if len(coords) >= 3:
-                    try:
-                        poly = Polygon(coords)
-                        if poly.is_valid and not poly.is_empty:
-                            buildings.append(poly)
-                    except:
-                        pass
-        if buildings:
-            gdf = gpd.GeoDataFrame(geometry=buildings, crs="EPSG:4326")
-            return gdf
-        else:
-            return generate_fallback_buildings(bbox)
-    except Exception as e:
-        return generate_fallback_buildings(bbox)
-
-
-def generate_fallback_buildings(bbox):
+    """Returns (GeoDataFrame, is_real_data: bool)"""
     minx, miny, maxx, maxy = bbox
-    buildings = []
-    cols, rows = 10, 8
-    step_x = (maxx - minx) / cols
-    step_y = (maxy - miny) / rows
-    for i in range(cols):
-        for j in range(rows):
-            bx = minx + i * step_x + step_x * 0.08
-            by = miny + j * step_y + step_y * 0.08
-            buildings.append(
-                box(bx, by, bx + step_x * 0.65, by + step_y * 0.65))
-    return gpd.GeoDataFrame(geometry=buildings, crs="EPSG:4326")
+    # Try progressively larger bboxes if nothing found
+    for expand in [0, 0.01, 0.025, 0.05]:
+        try:
+            b = [minx - expand, miny - expand,
+                 maxx + expand, maxy + expand]
+            bminx, bminy, bmaxx, bmaxy = b
+            query = f"""
+            [out:json][timeout:60];
+            (
+              way["building"]({bminy},{bminx},{bmaxy},{bmaxx});
+              way["building:part"]({bminy},{bminx},{bmaxy},{bmaxx});
+              relation["building"]({bminy},{bminx},{bmaxy},{bmaxx});
+            );
+            out geom;
+            """
+            response = requests.post(
+                "https://overpass-api.de/api/interpreter",
+                data={"data": query},
+                timeout=60
+            )
+            data = response.json()
+            buildings = []
+            for element in data.get("elements", []):
+                if element.get("type") == "way":
+                    coords = [(n["lon"], n["lat"])
+                              for n in element.get("geometry", [])]
+                    if len(coords) >= 3:
+                        try:
+                            poly = Polygon(coords)
+                            if poly.is_valid and not poly.is_empty:
+                                buildings.append(poly)
+                        except:
+                            pass
+            if buildings:
+                gdf = gpd.GeoDataFrame(geometry=buildings, crs="EPSG:4326")
+                return gdf, True   # real data found
+        except Exception:
+            pass
+    # Nothing found even after expansion — return empty
+    empty = gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+    return empty, False            # no real data
 
 
 # ── Fetch real waterways from OSM ─────────────────────────────────
@@ -283,6 +272,7 @@ def fetch_real_flood_zones(place_name, bbox, river_name):
                             from shapely.geometry import LineString
                             poly = LineString(coords)
                         if poly.is_valid and not poly.is_empty:
+                            # bigger buffer so river lines become flood areas
                             buffered = poly.buffer(0.006)
                             water_polys.append(buffered)
                     except:
@@ -303,6 +293,7 @@ def generate_fallback_flood(bbox):
     cy = (miny + maxy) / 2
     w  = (maxx - minx) * 0.35
     h  = (maxy - miny) * 0.55
+    # sinuous river-like polygon through center of bbox
     pts = []
     steps = 20
     for i in range(steps + 1):
@@ -593,7 +584,7 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
                 [lat2,lon2],
                 icon=folium.DivIcon(
                     html='<div style="font-size:16px;color:#00eeff;'
-                         'text-shadow:0 0 4px #000">&#9660;</div>',
+                         'text-shadow:0 0 4px #000">▼</div>',
                     icon_size=(18,18), icon_anchor=(9,9))
             ).add_to(flow_layer)
     flow_layer.add_to(m)
@@ -604,203 +595,86 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         "padding:7px 10px;z-index:9999;color:white;"
         "font-family:Arial;font-size:10px;"
         "border:1px solid #2a2a3a;min-width:130px;line-height:1.6'>"
-        "<b style='font-size:10px'>&#128506; Legend</b>"
+        "<b style='font-size:10px'>🗺️ Legend</b>"
         "<hr style='margin:4px 0;border-color:#2a2a3a'>"
         "<b style='font-size:9px;color:#aaa'>ZONES</b><br>"
-        "<span style='color:#0055ff'>&#9608;&#9608;</span> Flood Zone<br>"
-        "<span style='color:#ff0000'>&#9608;&#9608;</span> High Risk<br>"
-        "<span style='color:#ffcc00'>&#9608;&#9608;</span> Moderate Risk<br>"
-        "<span style='color:#ff8800'>&#9608;&#9608;</span> Low Risk<br>"
+        "<span style='color:#0055ff'>██</span> Flood Zone<br>"
+        "<span style='color:#ff0000'>██</span> High Risk<br>"
+        "<span style='color:#ffcc00'>██</span> Moderate Risk<br>"
+        "<span style='color:#ff8800'>██</span> Low Risk<br>"
         "<hr style='margin:4px 0;border-color:#2a2a3a'>"
         "<b style='font-size:9px;color:#aaa'>BUILDINGS</b><br>"
-        "<span style='color:#ff2222'>&#9679;</span> High Risk<br>"
-        "<span style='color:#ffbb00'>&#9679;</span> Moderate<br>"
-        "<span style='color:#ff7700'>&#9679;</span> Low Risk<br>"
-        "<span style='color:#00dd77'>&#9632;</span> Safe<br>"
+        "<span style='color:#ff2222'>●</span> High Risk<br>"
+        "<span style='color:#ffbb00'>●</span> Moderate<br>"
+        "<span style='color:#ff7700'>●</span> Low Risk<br>"
+        "<span style='color:#00dd77'>■</span> Safe<br>"
         "<hr style='margin:4px 0;border-color:#2a2a3a'>"
-        "<span style='color:#00eeff'>&#9660;</span> Water Flow</div>"
+        "<span style='color:#00eeff'>▼</span> Water Flow</div>"
     )
     m.get_root().html.add_child(folium.Element(legend))
 
-    # ── White-panel checkbox toggle — reliable layer registry ──────
-    map_var = m.get_name()   # e.g. "map_a1b2c3" — Folium's JS variable
-
+    # Inject toggle buttons INSIDE the map iframe
     toggle_js = """
-    <style>
-    #ltc-panel {
-        position: fixed;
-        top: 80px;
-        right: 10px;
-        z-index: 9999;
-        font-family: Arial, sans-serif;
-        font-size: 13px;
-        min-width: 230px;
-    }
-    #ltc-toggle-btn {
-        background: white;
-        border: 2px solid #bbb;
-        border-radius: 4px 4px 0 0;
-        padding: 6px 12px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: bold;
-        color: #333;
-        display: block;
-        width: 100%%;
-        text-align: left;
-        box-shadow: 0 1px 5px rgba(0,0,0,0.25);
-    }
-    #ltc-toggle-btn:hover { background: #f0f0f0; }
-    #ltc-body {
-        background: white;
-        border: 2px solid #bbb;
-        border-top: none;
-        border-radius: 0 0 4px 4px;
-        padding: 4px 12px 10px 12px;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-        max-height: 440px;
-        overflow-y: auto;
-    }
-    .ltc-row {
-        display: flex;
-        align-items: center;
-        padding: 4px 3px;
-        cursor: pointer;
-        user-select: none;
-        color: #222;
-        font-size: 13px;
-        border-radius: 3px;
-        gap: 7px;
-    }
-    .ltc-row:hover { background: #eef3ff; border-radius: 4px; }
-    .ltc-row input[type=checkbox] {
-        width: 15px; height: 15px;
-        cursor: pointer;
-        accent-color: #1a6bff;
-        flex-shrink: 0;
-    }
-    .ltc-dot {
-        width: 12px; height: 12px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        border: 1px solid rgba(0,0,0,0.2);
-    }
-    .ltc-sq {
-        width: 12px; height: 12px;
-        border-radius: 2px;
-        flex-shrink: 0;
-        border: 1px solid rgba(0,0,0,0.2);
-    }
-    .ltc-sec {
-        font-size: 10px;
-        font-weight: bold;
-        color: #999;
-        margin: 9px 0 3px 0;
-        text-transform: uppercase;
-        letter-spacing: 0.7px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 3px;
-    }
-    </style>
-
-    <div id="ltc-panel">
-      <button id="ltc-toggle-btn" onclick="ltcTogglePanel()">
-        &#9776; Layers &#9660;
-      </button>
-      <div id="ltc-body">
-
-        <div class="ltc-sec">Zones</div>
-        <label class="ltc-row">
-          <input type="checkbox" id="chk_flood" checked onchange="ltcTog('flood')">
-          <span class="ltc-sq" style="background:#0055ff"></span> Flood Zone
-        </label>
-        <label class="ltc-row">
-          <input type="checkbox" id="chk_highzone" checked onchange="ltcTog('highzone')">
-          <span class="ltc-sq" style="background:#ff0000"></span> High Risk Zone
-        </label>
-        <label class="ltc-row">
-          <input type="checkbox" id="chk_modzone" checked onchange="ltcTog('modzone')">
-          <span class="ltc-sq" style="background:#ffcc00"></span> Moderate Risk Zone
-        </label>
-        <label class="ltc-row">
-          <input type="checkbox" id="chk_lowzone" checked onchange="ltcTog('lowzone')">
-          <span class="ltc-sq" style="background:#ff8800"></span> Low Risk Zone
-        </label>
-
-        <div class="ltc-sec">Buildings</div>
-        <label class="ltc-row">
-          <input type="checkbox" id="chk_safe" checked onchange="ltcTog('safe')">
-          <span class="ltc-dot" style="background:#00dd77"></span> Safe Buildings
-        </label>
-        <label class="ltc-row">
-          <input type="checkbox" id="chk_highbld" checked onchange="ltcTog('highbld')">
-          <span class="ltc-dot" style="background:#ff2222"></span> High Risk Buildings
-        </label>
-        <label class="ltc-row">
-          <input type="checkbox" id="chk_modbld" checked onchange="ltcTog('modbld')">
-          <span class="ltc-dot" style="background:#ffbb00"></span> Moderate Risk Buildings
-        </label>
-        <label class="ltc-row">
-          <input type="checkbox" id="chk_lowbld" checked onchange="ltcTog('lowbld')">
-          <span class="ltc-dot" style="background:#ff7700"></span> Low Risk Buildings
-        </label>
-
-        <div class="ltc-sec">Other</div>
-        <label class="ltc-row">
-          <input type="checkbox" id="chk_flow" checked onchange="ltcTog('flow')">
-          <span class="ltc-dot" style="background:#00eeff"></span> Water Flow Direction
-        </label>
-
-      </div>
+    <div id="layer-toggles" style="
+        position:fixed; top:10px; left:50%; transform:translateX(-50%);
+        z-index:9999; display:flex; flex-wrap:wrap; gap:5px;
+        background:rgba(5,10,20,0.88); padding:8px 12px;
+        border-radius:10px; border:1px solid #2a2a3a; max-width:90vw;">
+      <span style="color:#aaa;font-size:10px;width:100%;margin-bottom:2px;font-family:Arial">🎛️ Layer Toggles</span>
+      <button onclick="tog(this,'Flood Zone')"            style="background:#0055ff33;color:#4d9fff;border:1.5px solid #0055ff;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🌊 Flood</button>
+      <button onclick="tog(this,'High Risk Zone')"        style="background:#ff000033;color:#ff5555;border:1.5px solid #ff2222;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🔴 High Zone</button>
+      <button onclick="tog(this,'Moderate Risk Zone')"    style="background:#ffcc0033;color:#ffcc00;border:1.5px solid #ffcc00;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟡 Mod Zone</button>
+      <button onclick="tog(this,'Low Risk Zone')"         style="background:#ff880033;color:#ff9933;border:1.5px solid #ff8800;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟠 Low Zone</button>
+      <button onclick="tog(this,'Safe Buildings')"        style="background:#00dd7733;color:#00dd77;border:1.5px solid #00dd77;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟢 Safe</button>
+      <button onclick="tog(this,'High Risk Buildings')"   style="background:#ff222233;color:#ff7777;border:1.5px solid #ff4444;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🔴 High Bldgs</button>
+      <button onclick="tog(this,'Moderate Risk Buildings')" style="background:#ffbb0033;color:#ffbb00;border:1.5px solid #ffbb00;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟡 Mod Bldgs</button>
+      <button onclick="tog(this,'Low Risk Buildings')"    style="background:#ff770033;color:#ff9944;border:1.5px solid #ff7700;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟠 Low Bldgs</button>
+      <button onclick="tog(this,'Water Flow Direction')"  style="background:#00eeff22;color:#00eeff;border:1.5px solid #00eeff;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">💧 Flow</button>
+      <button onclick="setAll(true)"  style="background:#ffffff15;color:#fff;border:1.5px solid #ffffff44;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">✅ All</button>
+      <button onclick="setAll(false)" style="background:#00000033;color:#aaa;border:1.5px solid #55555588;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🚫 None</button>
     </div>
 
     <script>
-    /* Map of key -> partial layer name to match */
-    var LTC_KEYS = {
-      flood:    'Flood Zone',
-      highzone: 'High Risk Zone',
-      modzone:  'Moderate Risk Zone',
-      lowzone:  'Low Risk Zone',
-      safe:     'Safe Buildings',
-      highbld:  'High Risk Buildings',
-      modbld:   'Moderate Risk Buildings',
-      lowbld:   'Low Risk Buildings',
-      flow:     'Water Flow Direction'
-    };
-
-    var ltcOpen = true;
-
-    function ltcTogglePanel() {
-      ltcOpen = !ltcOpen;
-      document.getElementById('ltc-body').style.display = ltcOpen ? '' : 'none';
-      document.getElementById('ltc-toggle-btn').innerHTML =
-        ltcOpen ? '&#9776; Layers &#9660;' : '&#9776; Layers &#9658;';
-      document.getElementById('ltc-toggle-btn').style.borderRadius =
-        ltcOpen ? '4px 4px 0 0' : '4px';
+    function getLeafletMap() {
+      for (let k in window) {
+        try {
+          if (window[k] && window[k]._layers && typeof window[k].eachLayer === 'function') return window[k];
+        } catch(e) {}
+      }
+      return null;
     }
 
-    /* Wait until the Leaflet map variable exists, then wire up */
-    function ltcGetMap() {
-      return window['""" + map_var + """'] || null;
-    }
-
-    function ltcTog(key) {
-      var lmap = ltcGetMap();
-      if (!lmap) { setTimeout(function(){ ltcTog(key); }, 200); return; }
-
-      var chk    = document.getElementById('chk_' + key);
-      var show   = chk.checked;
-      var target = LTC_KEYS[key] || '';
+    function tog(btn, layerName) {
+      const lmap = getLeafletMap();
+      if (!lmap) return;
+      const isOff = btn.style.opacity === '0.3';
+      btn.style.opacity = isOff ? '1' : '0.3';
 
       lmap.eachLayer(function(layer) {
-        if (!layer.options || !layer.options.name) return;
-        /* strip non-ASCII (emojis) for comparison */
-        var n = layer.options.name.replace(/[^\\x20-\\x7E]/g, '').trim();
-        var t = target.replace(/[^\\x20-\\x7E]/g, '').trim();
-        if (n.indexOf(t) !== -1 || t.indexOf(n) !== -1) {
+        if (layer.options && layer.options.name) {
+          const name = layer.options.name;
+          // strip emoji prefix for matching
+          const clean = name.replace(/[\u{1F300}-\u{1FFFF}]|[\u2600-\u27BF]/gu, '').trim();
+          const target = layerName.replace(/[\u{1F300}-\u{1FFFF}]|[\u2600-\u27BF]/gu, '').trim();
+          if (clean.includes(target) || target.includes(clean)) {
+            if (isOff) lmap.addLayer(layer);
+            else lmap.removeLayer(layer);
+          }
+        }
+      });
+    }
+
+    function setAll(visible) {
+      const lmap = getLeafletMap();
+      if (!lmap) return;
+      document.querySelectorAll('#layer-toggles button').forEach(function(btn) {
+        btn.style.opacity = visible ? '1' : '0.3';
+      });
+      lmap.eachLayer(function(layer) {
+        if (layer.options && layer.options.name) {
           try {
-            if (show) lmap.addLayer(layer);
-            else      lmap.removeLayer(layer);
+            if (visible) lmap.addLayer(layer);
+            else lmap.removeLayer(layer);
           } catch(e) {}
         }
       });
@@ -946,18 +820,26 @@ if "done" not in st.session_state:
 
 # ── Run Analysis ──────────────────────────────────────────────────
 if run_btn:
+    # Clear cache so fresh OSM data is always fetched
     fetch_real_flood_zones.clear()
     fetch_real_buildings.clear()
 
-    loc     = UTTARAKHAND_LOCATIONS[selected]
-    bbox    = loc["flood_bbox"]
+    loc  = UTTARAKHAND_LOCATIONS[selected]
+    bbox = loc["flood_bbox"]
 
     with st.spinner(f"🌊 Fetching real flood zones for {selected}..."):
         flood_gdf = fetch_real_flood_zones(
             loc["place"], bbox, loc["river"])
 
     with st.spinner(f"🏢 Fetching real buildings from OpenStreetMap..."):
-        buildings_gdf = fetch_real_buildings(loc["place"], bbox)
+        buildings_gdf, is_real = fetch_real_buildings(loc["place"], bbox)
+
+    if not is_real or len(buildings_gdf) == 0:
+        st.warning(
+            "⚠️ No building data found in OpenStreetMap for this area. "
+            "The map will show flood zones only — building impact cannot be calculated. "
+            "Try a different district or check back later.")
+        buildings_gdf = gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
 
     with st.spinner("📊 Running spatial intersection analysis..."):
         flooded_gdf = find_flooded_buildings(buildings_gdf, flood_gdf)
@@ -969,17 +851,18 @@ if run_btn:
 
     total   = len(buildings_gdf)
     flooded = len(flooded_gdf)
-    pct     = round((flooded/total)*100,1) if total else 0
+    pct     = round((flooded / total) * 100, 1) if total else 0
     safe    = total - flooded
 
-    st.session_state.done     = True
-    st.session_state.total    = total
-    st.session_state.flooded  = flooded
-    st.session_state.pct      = pct
-    st.session_state.safe     = safe
-    st.session_state.map_html = map_html
-    st.session_state.place    = selected
-    st.session_state.river    = loc["river"]
+    st.session_state.done      = True
+    st.session_state.total     = total
+    st.session_state.flooded   = flooded
+    st.session_state.pct       = pct
+    st.session_state.safe      = safe
+    st.session_state.map_html  = map_html
+    st.session_state.place     = selected
+    st.session_state.river     = loc["river"]
+    st.session_state.is_real   = is_real
 
 # ── Results ───────────────────────────────────────────────────────
 if st.session_state.done:
@@ -1052,14 +935,18 @@ if st.session_state.done:
     fig = impact_chart(total, flooded)
     st.pyplot(fig)
 
+    is_real = st.session_state.get("is_real", True)
+    data_tag = (
+        "<span style='color:#2ecc71'>✅ Real OSM building data</span>"
+        if is_real and total > 0
+        else "<span style='color:#e74c3c'>⚠️ No OSM buildings found — flood zones shown only</span>"
+    )
     st.markdown(
         f"<div class='info-banner'>"
-        f"✅ <b>Analysis complete!</b> — "
         f"<b>{st.session_state.place}</b> | "
         f"River: {st.session_state.river} | "
         f"{total} buildings | "
         f"{flooded} flooded ({pct}%) | "
         f"{safe} safe ({100-pct}%)<br>"
-        f"<small style='opacity:0.7'>"
-        f"Data source: OpenStreetMap (live)</small>"
+        f"<small style='opacity:0.8'>{data_tag} • Source: OpenStreetMap (live)</small>"
         f"</div>", unsafe_allow_html=True)
