@@ -192,17 +192,20 @@ def fetch_real_buildings(place_name, bbox):
         minx, miny, maxx, maxy = bbox
         overpass_url = "https://overpass-api.de/api/interpreter"
         query = f"""
-        [out:json][timeout:30];
+        [out:json][timeout:60];
         (
           way["building"]({miny},{minx},{maxy},{maxx});
+          way["building:part"]({miny},{minx},{maxy},{maxx});
           relation["building"]({miny},{minx},{maxy},{maxx});
+          way["amenity"]({miny},{minx},{maxy},{maxx});
+          way["landuse"="residential"]({miny},{minx},{maxy},{maxx});
         );
         out geom;
         """
         response = requests.post(
             overpass_url,
             data={"data": query},
-            timeout=30
+            timeout=60
         )
         data = response.json()
         buildings = []
@@ -213,7 +216,7 @@ def fetch_real_buildings(place_name, bbox):
                 if len(coords) >= 3:
                     try:
                         poly = Polygon(coords)
-                        if poly.is_valid:
+                        if poly.is_valid and not poly.is_empty:
                             buildings.append(poly)
                     except:
                         pass
@@ -248,19 +251,23 @@ def fetch_real_flood_zones(place_name, bbox, river_name):
         minx, miny, maxx, maxy = bbox
         overpass_url = "https://overpass-api.de/api/interpreter"
         query = f"""
-        [out:json][timeout:30];
+        [out:json][timeout:60];
         (
           way["waterway"="river"]({miny},{minx},{maxy},{maxx});
+          way["waterway"="stream"]({miny},{minx},{maxy},{maxx});
+          way["waterway"="canal"]({miny},{minx},{maxy},{maxx});
           way["natural"="water"]({miny},{minx},{maxy},{maxx});
+          way["natural"="wetland"]({miny},{minx},{maxy},{maxx});
           way["landuse"="reservoir"]({miny},{minx},{maxy},{maxx});
           relation["natural"="water"]({miny},{minx},{maxy},{maxx});
+          relation["waterway"="river"]({miny},{minx},{maxy},{maxx});
         );
         out geom;
         """
         response = requests.post(
             "https://overpass-api.de/api/interpreter",
             data={"data": query},
-            timeout=30
+            timeout=60
         )
         data = response.json()
         water_polys = []
@@ -268,11 +275,16 @@ def fetch_real_flood_zones(place_name, bbox, river_name):
             if element.get("type") == "way":
                 coords = [(n["lon"], n["lat"])
                           for n in element.get("geometry", [])]
-                if len(coords) >= 3:
+                if len(coords) >= 2:
                     try:
-                        poly = Polygon(coords)
+                        if len(coords) >= 3:
+                            poly = Polygon(coords)
+                        else:
+                            from shapely.geometry import LineString
+                            poly = LineString(coords)
                         if poly.is_valid and not poly.is_empty:
-                            buffered = poly.buffer(0.003)
+                            # bigger buffer so river lines become flood areas
+                            buffered = poly.buffer(0.006)
                             water_polys.append(buffered)
                     except:
                         pass
@@ -611,11 +623,82 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         "<span style='color:#00eeff'>▼</span> Water Flow</div>"
     )
     m.get_root().html.add_child(folium.Element(legend))
+
+    # Inject toggle buttons INSIDE the map iframe
+    toggle_js = """
+    <div id="layer-toggles" style="
+        position:fixed; top:10px; left:50%; transform:translateX(-50%);
+        z-index:9999; display:flex; flex-wrap:wrap; gap:5px;
+        background:rgba(5,10,20,0.88); padding:8px 12px;
+        border-radius:10px; border:1px solid #2a2a3a; max-width:90vw;">
+      <span style="color:#aaa;font-size:10px;width:100%;margin-bottom:2px;font-family:Arial">🎛️ Layer Toggles</span>
+      <button onclick="tog(this,'Flood Zone')"            style="background:#0055ff33;color:#4d9fff;border:1.5px solid #0055ff;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🌊 Flood</button>
+      <button onclick="tog(this,'High Risk Zone')"        style="background:#ff000033;color:#ff5555;border:1.5px solid #ff2222;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🔴 High Zone</button>
+      <button onclick="tog(this,'Moderate Risk Zone')"    style="background:#ffcc0033;color:#ffcc00;border:1.5px solid #ffcc00;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟡 Mod Zone</button>
+      <button onclick="tog(this,'Low Risk Zone')"         style="background:#ff880033;color:#ff9933;border:1.5px solid #ff8800;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟠 Low Zone</button>
+      <button onclick="tog(this,'Safe Buildings')"        style="background:#00dd7733;color:#00dd77;border:1.5px solid #00dd77;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟢 Safe</button>
+      <button onclick="tog(this,'High Risk Buildings')"   style="background:#ff222233;color:#ff7777;border:1.5px solid #ff4444;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🔴 High Bldgs</button>
+      <button onclick="tog(this,'Moderate Risk Buildings')" style="background:#ffbb0033;color:#ffbb00;border:1.5px solid #ffbb00;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟡 Mod Bldgs</button>
+      <button onclick="tog(this,'Low Risk Buildings')"    style="background:#ff770033;color:#ff9944;border:1.5px solid #ff7700;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟠 Low Bldgs</button>
+      <button onclick="tog(this,'Water Flow Direction')"  style="background:#00eeff22;color:#00eeff;border:1.5px solid #00eeff;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">💧 Flow</button>
+      <button onclick="setAll(true)"  style="background:#ffffff15;color:#fff;border:1.5px solid #ffffff44;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">✅ All</button>
+      <button onclick="setAll(false)" style="background:#00000033;color:#aaa;border:1.5px solid #55555588;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🚫 None</button>
+    </div>
+
+    <script>
+    function getLeafletMap() {
+      for (let k in window) {
+        try {
+          if (window[k] && window[k]._layers && typeof window[k].eachLayer === 'function') return window[k];
+        } catch(e) {}
+      }
+      return null;
+    }
+
+    function tog(btn, layerName) {
+      const lmap = getLeafletMap();
+      if (!lmap) return;
+      const isOff = btn.style.opacity === '0.3';
+      btn.style.opacity = isOff ? '1' : '0.3';
+
+      lmap.eachLayer(function(layer) {
+        if (layer.options && layer.options.name) {
+          const name = layer.options.name;
+          // strip emoji prefix for matching
+          const clean = name.replace(/[\u{1F300}-\u{1FFFF}]|[\u2600-\u27BF]/gu, '').trim();
+          const target = layerName.replace(/[\u{1F300}-\u{1FFFF}]|[\u2600-\u27BF]/gu, '').trim();
+          if (clean.includes(target) || target.includes(clean)) {
+            if (isOff) lmap.addLayer(layer);
+            else lmap.removeLayer(layer);
+          }
+        }
+      });
+    }
+
+    function setAll(visible) {
+      const lmap = getLeafletMap();
+      if (!lmap) return;
+      document.querySelectorAll('#layer-toggles button').forEach(function(btn) {
+        btn.style.opacity = visible ? '1' : '0.3';
+      });
+      lmap.eachLayer(function(layer) {
+        if (layer.options && layer.options.name) {
+          try {
+            if (visible) lmap.addLayer(layer);
+            else lmap.removeLayer(layer);
+          } catch(e) {}
+        }
+      });
+    }
+    </script>
+    """
+    m.get_root().html.add_child(folium.Element(toggle_js))
+
     plugins.Fullscreen(position="topleft").add_to(m)
     plugins.MiniMap(toggle_display=True, position="bottomleft",
                     width=130, height=130, zoom_level_offset=-5).add_to(m)
     plugins.MousePosition(position="bottomright", prefix="📍 ").add_to(m)
-    folium.LayerControl(position="topright", collapsed=False).add_to(m)
+    folium.LayerControl(position="topright", collapsed=True).add_to(m)
     return m
 
 
@@ -748,6 +831,10 @@ if "done" not in st.session_state:
 
 # ── Run Analysis ──────────────────────────────────────────────────
 if run_btn:
+    # Clear cache so fresh OSM data is always fetched
+    fetch_real_flood_zones.clear()
+    fetch_real_buildings.clear()
+
     loc     = UTTARAKHAND_LOCATIONS[selected]
     bbox    = loc["flood_bbox"]
 
@@ -835,7 +922,7 @@ if st.session_state.done:
         "font-weight:700;padding-left:12px;border-left:3px solid #1a6bff'>"
         "🗺️ Interactive Flood Map"
         "<small style='font-size:0.75rem;opacity:0.6;font-weight:400'>"
-        " &nbsp;&nbsp;Real OSM data — Switch: Satellite / Street / Terrain"
+        " &nbsp;&nbsp;Use toggle buttons inside map • Switch: Satellite / Street / Terrain"
         "</small></div>", unsafe_allow_html=True)
 
     st.components.v1.html(
