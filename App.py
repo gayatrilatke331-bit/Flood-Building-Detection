@@ -709,7 +709,7 @@ if rainfall_mm > 0:
             f"<div class='metric-card rain-card'>"
             f"<div class='label'>Risk</div>"
             f"<div class='value'>{r['emoji']}</div>"
-            f"<div class='sub' style='color:{r[chr(99)+chr(111)+chr(108)+chr(111)+chr(114)]}'>"
+            f"<div class='sub' style='color:{r[\"color\"]}'>"
             f"{r['risk']}</div></div>",
             unsafe_allow_html=True)
         st.markdown(
@@ -851,19 +851,3 @@ if st.session_state.done:
         f"<small style='opacity:0.7'>"
         f"Data source: OpenStreetMap (live)</small>"
         f"</div>", unsafe_allow_html=True)
-```
-
----
-
-## `requirements.txt`
-```
-streamlit
-folium
-matplotlib
-geopandas
-shapely
-rasterio
-numpy
-opencv-python
-osmnx
-requests
