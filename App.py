@@ -705,11 +705,12 @@ if rainfall_mm > 0:
             f"<div class='value'>{r['intensity']}</div>"
             f"<div class='sub'>mm/hour</div></div>",
             unsafe_allow_html=True)
+        rain_color = r['color']
         rc4.markdown(
             f"<div class='metric-card rain-card'>"
             f"<div class='label'>Risk</div>"
             f"<div class='value'>{r['emoji']}</div>"
-            f"<div class='sub' style='color:{r[\"color\"]}'>"
+            f"<div class='sub' style='color:{rain_color}'>"
             f"{r['risk']}</div></div>",
             unsafe_allow_html=True)
         st.markdown(
