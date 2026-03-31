@@ -100,7 +100,7 @@ UTTARAKHAND_LOCATIONS = {
         "river":       "Ganga",
         "risk":        "Extreme",
         "description": "Ganga river flooding near Har Ki Pauri ghats",
-        "flood_bbox":  [78.150, 29.935, 78.190, 29.960],
+        "flood_bbox":  [78.130, 29.920, 78.210, 29.975],
     },
     "Rishikesh": {
         "place":       "Rishikesh, Uttarakhand, India",
@@ -109,7 +109,7 @@ UTTARAKHAND_LOCATIONS = {
         "river":       "Ganga",
         "risk":        "High",
         "description": "Ganga river overflow near Laxman Jhula",
-        "flood_bbox":  [78.255, 30.075, 78.285, 30.100],
+        "flood_bbox":  [78.240, 30.060, 78.310, 30.120],
     },
     "Dehradun": {
         "place":       "Dehradun, Uttarakhand, India",
@@ -118,7 +118,7 @@ UTTARAKHAND_LOCATIONS = {
         "river":       "Rispana & Bindal",
         "risk":        "High",
         "description": "Seasonal flooding in Rispana and Bindal river basins",
-        "flood_bbox":  [78.015, 30.305, 78.055, 30.330],
+        "flood_bbox":  [77.990, 30.285, 78.080, 30.350],
     },
     "Nainital": {
         "place":       "Nainital, Uttarakhand, India",
@@ -127,7 +127,7 @@ UTTARAKHAND_LOCATIONS = {
         "river":       "Naini Lake",
         "risk":        "Moderate",
         "description": "Lake overflow and landslide-induced flooding",
-        "flood_bbox":  [79.445, 29.385, 79.465, 29.400],
+        "flood_bbox":  [79.430, 29.375, 79.480, 29.415],
     },
     "Rudraprayag": {
         "place":       "Rudraprayag, Uttarakhand, India",
@@ -136,7 +136,7 @@ UTTARAKHAND_LOCATIONS = {
         "river":       "Alaknanda & Mandakini",
         "risk":        "Extreme",
         "description": "Alaknanda and Mandakini river confluence flooding",
-        "flood_bbox":  [78.975, 30.278, 78.990, 30.292],
+        "flood_bbox":  [78.960, 30.265, 79.005, 30.305],
     },
     "Uttarkashi": {
         "place":       "Uttarkashi, Uttarakhand, India",
@@ -145,7 +145,7 @@ UTTARAKHAND_LOCATIONS = {
         "river":       "Bhagirathi",
         "risk":        "High",
         "description": "Bhagirathi river flooding in narrow valley",
-        "flood_bbox":  [78.428, 30.720, 78.445, 30.735],
+        "flood_bbox":  [78.415, 30.710, 78.460, 30.748],
     },
     "Chamoli": {
         "place":       "Chamoli, Uttarakhand, India",
@@ -154,7 +154,7 @@ UTTARAKHAND_LOCATIONS = {
         "river":       "Alaknanda",
         "risk":        "Extreme",
         "description": "Alaknanda river — glacial outburst flood risk",
-        "flood_bbox":  [79.318, 30.393, 79.335, 30.407],
+        "flood_bbox":  [79.300, 30.380, 79.355, 30.422],
     },
     "Pithoragarh": {
         "place":       "Pithoragarh, Uttarakhand, India",
@@ -163,7 +163,7 @@ UTTARAKHAND_LOCATIONS = {
         "river":       "Kali & Saryu",
         "risk":        "High",
         "description": "Kali and Saryu river flooding in border region",
-        "flood_bbox":  [80.210, 29.576, 80.228, 29.591],
+        "flood_bbox":  [80.195, 29.565, 80.240, 29.605],
     },
     "Tehri": {
         "place":       "Tehri Garhwal, Uttarakhand, India",
@@ -172,7 +172,7 @@ UTTARAKHAND_LOCATIONS = {
         "river":       "Bhilangana",
         "risk":        "Moderate",
         "description": "Bhilangana river and Tehri dam downstream risk",
-        "flood_bbox":  [78.472, 30.370, 78.490, 30.388],
+        "flood_bbox":  [78.455, 30.355, 78.510, 30.405],
     },
     "Roorkee": {
         "place":       "Roorkee, Uttarakhand, India",
@@ -181,7 +181,7 @@ UTTARAKHAND_LOCATIONS = {
         "river":       "Ganga Canal",
         "risk":        "Moderate",
         "description": "Upper Ganga canal overflow during heavy rainfall",
-        "flood_bbox":  [77.880, 29.847, 77.898, 29.862],
+        "flood_bbox":  [77.865, 29.835, 77.912, 29.875],
     },
 }
 
@@ -229,14 +229,15 @@ def fetch_real_buildings(place_name, bbox):
 def generate_fallback_buildings(bbox):
     minx, miny, maxx, maxy = bbox
     buildings = []
-    step_x = (maxx - minx) / 8
-    step_y = (maxy - miny) / 6
-    for i in range(8):
-        for j in range(6):
-            bx = minx + i * step_x + step_x * 0.1
-            by = miny + j * step_y + step_y * 0.1
+    cols, rows = 10, 8
+    step_x = (maxx - minx) / cols
+    step_y = (maxy - miny) / rows
+    for i in range(cols):
+        for j in range(rows):
+            bx = minx + i * step_x + step_x * 0.08
+            by = miny + j * step_y + step_y * 0.08
             buildings.append(
-                box(bx, by, bx + step_x * 0.6, by + step_y * 0.6))
+                box(bx, by, bx + step_x * 0.65, by + step_y * 0.65))
     return gpd.GeoDataFrame(geometry=buildings, crs="EPSG:4326")
 
 
@@ -285,14 +286,35 @@ def fetch_real_flood_zones(place_name, bbox, river_name):
 
 
 def generate_fallback_flood(bbox):
+    import math
     minx, miny, maxx, maxy = bbox
     cx = (minx + maxx) / 2
-    flood_poly = Polygon([
-        (cx-0.005, miny+0.002),
-        (cx+0.005, miny+0.002),
-        (cx+0.008, maxy-0.002),
-        (cx-0.008, maxy-0.002),
-    ])
+    cy = (miny + maxy) / 2
+    w  = (maxx - minx) * 0.35
+    h  = (maxy - miny) * 0.55
+    # sinuous river-like polygon through center of bbox
+    pts = []
+    steps = 20
+    for i in range(steps + 1):
+        t     = i / steps
+        angle = t * math.pi
+        ox    = math.sin(angle * 2) * w * 0.25
+        px    = cx - w/2 + t * w + ox
+        py_top = cy + h/2 - t * h * 0.1
+        pts.append((px, py_top))
+    for i in range(steps, -1, -1):
+        t     = i / steps
+        angle = t * math.pi
+        ox    = math.sin(angle * 2) * w * 0.25
+        px    = cx - w/2 + t * w + ox
+        py_bot = cy - h/2 + t * h * 0.1
+        pts.append((px, py_bot))
+    try:
+        flood_poly = Polygon(pts)
+        if not flood_poly.is_valid:
+            flood_poly = flood_poly.buffer(0)
+    except:
+        flood_poly = box(cx - w/2, cy - h/2, cx + w/2, cy + h/2)
     return gpd.GeoDataFrame(geometry=[flood_poly], crs="EPSG:4326")
 
 
