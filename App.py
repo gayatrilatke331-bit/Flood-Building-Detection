@@ -622,7 +622,9 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
     )
     m.get_root().html.add_child(folium.Element(legend))
 
-    # ── Clean white-panel checkbox toggle (image-2 style) ─────────
+    # ── White-panel checkbox toggle — reliable layer registry ──────
+    map_var = m.get_name()   # e.g. "map_a1b2c3" — Folium's JS variable
+
     toggle_js = """
     <style>
     #ltc-panel {
@@ -632,10 +634,11 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         z-index: 9999;
         font-family: Arial, sans-serif;
         font-size: 13px;
+        min-width: 230px;
     }
     #ltc-toggle-btn {
         background: white;
-        border: 2px solid #ccc;
+        border: 2px solid #bbb;
         border-radius: 4px 4px 0 0;
         padding: 6px 12px;
         cursor: pointer;
@@ -643,158 +646,162 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         font-weight: bold;
         color: #333;
         display: block;
-        width: 100%;
+        width: 100%%;
         text-align: left;
-        box-shadow: 0 1px 5px rgba(0,0,0,0.3);
+        box-shadow: 0 1px 5px rgba(0,0,0,0.25);
     }
-    #ltc-toggle-btn:hover { background: #f4f4f4; }
+    #ltc-toggle-btn:hover { background: #f0f0f0; }
     #ltc-body {
         background: white;
-        border: 2px solid #ccc;
+        border: 2px solid #bbb;
         border-top: none;
         border-radius: 0 0 4px 4px;
-        padding: 6px 12px 10px 12px;
-        min-width: 220px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-        max-height: 420px;
+        padding: 4px 12px 10px 12px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        max-height: 440px;
         overflow-y: auto;
     }
     .ltc-row {
         display: flex;
         align-items: center;
-        padding: 3px 2px;
+        padding: 4px 3px;
         cursor: pointer;
         user-select: none;
         color: #222;
         font-size: 13px;
         border-radius: 3px;
+        gap: 7px;
     }
-    .ltc-row:hover { background: #f0f4ff; }
+    .ltc-row:hover { background: #eef3ff; border-radius: 4px; }
     .ltc-row input[type=checkbox] {
-        margin-right: 7px;
-        width: 14px;
-        height: 14px;
+        width: 15px; height: 15px;
         cursor: pointer;
         accent-color: #1a6bff;
+        flex-shrink: 0;
     }
     .ltc-dot {
-        width: 11px; height: 11px;
+        width: 12px; height: 12px;
         border-radius: 50%;
-        display: inline-block;
-        margin-right: 7px;
         flex-shrink: 0;
-        border: 1px solid rgba(0,0,0,0.15);
+        border: 1px solid rgba(0,0,0,0.2);
     }
     .ltc-sq {
-        width: 11px; height: 11px;
+        width: 12px; height: 12px;
         border-radius: 2px;
-        display: inline-block;
-        margin-right: 7px;
         flex-shrink: 0;
-        border: 1px solid rgba(0,0,0,0.15);
+        border: 1px solid rgba(0,0,0,0.2);
     }
-    .ltc-section {
+    .ltc-sec {
         font-size: 10px;
         font-weight: bold;
-        color: #888;
-        margin: 8px 0 2px 0;
+        color: #999;
+        margin: 9px 0 3px 0;
         text-transform: uppercase;
-        letter-spacing: 0.6px;
+        letter-spacing: 0.7px;
         border-bottom: 1px solid #eee;
-        padding-bottom: 2px;
+        padding-bottom: 3px;
     }
     </style>
 
     <div id="ltc-panel">
-      <button id="ltc-toggle-btn" onclick="togglePanel()">&#9776; Layers &#9660;</button>
+      <button id="ltc-toggle-btn" onclick="ltcTogglePanel()">
+        &#9776; Layers &#9660;
+      </button>
       <div id="ltc-body">
 
-        <div class="ltc-section">Zones</div>
-
+        <div class="ltc-sec">Zones</div>
         <label class="ltc-row">
-          <input type="checkbox" checked onchange="togLayer(this,'Flood Zone')">
-          <span class="ltc-sq" style="background:#0055ff;opacity:0.75"></span> Flood Zone
+          <input type="checkbox" id="chk_flood" checked onchange="ltcTog('flood')">
+          <span class="ltc-sq" style="background:#0055ff"></span> Flood Zone
         </label>
         <label class="ltc-row">
-          <input type="checkbox" checked onchange="togLayer(this,'High Risk Zone')">
-          <span class="ltc-sq" style="background:#ff0000;opacity:0.75"></span> High Risk Zone
+          <input type="checkbox" id="chk_highzone" checked onchange="ltcTog('highzone')">
+          <span class="ltc-sq" style="background:#ff0000"></span> High Risk Zone
         </label>
         <label class="ltc-row">
-          <input type="checkbox" checked onchange="togLayer(this,'Moderate Risk Zone')">
+          <input type="checkbox" id="chk_modzone" checked onchange="ltcTog('modzone')">
           <span class="ltc-sq" style="background:#ffcc00"></span> Moderate Risk Zone
         </label>
         <label class="ltc-row">
-          <input type="checkbox" checked onchange="togLayer(this,'Low Risk Zone')">
-          <span class="ltc-sq" style="background:#ff8800;opacity:0.85"></span> Low Risk Zone
+          <input type="checkbox" id="chk_lowzone" checked onchange="ltcTog('lowzone')">
+          <span class="ltc-sq" style="background:#ff8800"></span> Low Risk Zone
         </label>
 
-        <div class="ltc-section">Buildings</div>
-
+        <div class="ltc-sec">Buildings</div>
         <label class="ltc-row">
-          <input type="checkbox" checked onchange="togLayer(this,'Safe Buildings')">
+          <input type="checkbox" id="chk_safe" checked onchange="ltcTog('safe')">
           <span class="ltc-dot" style="background:#00dd77"></span> Safe Buildings
         </label>
         <label class="ltc-row">
-          <input type="checkbox" checked onchange="togLayer(this,'High Risk Buildings')">
+          <input type="checkbox" id="chk_highbld" checked onchange="ltcTog('highbld')">
           <span class="ltc-dot" style="background:#ff2222"></span> High Risk Buildings
         </label>
         <label class="ltc-row">
-          <input type="checkbox" checked onchange="togLayer(this,'Moderate Risk Buildings')">
+          <input type="checkbox" id="chk_modbld" checked onchange="ltcTog('modbld')">
           <span class="ltc-dot" style="background:#ffbb00"></span> Moderate Risk Buildings
         </label>
         <label class="ltc-row">
-          <input type="checkbox" checked onchange="togLayer(this,'Low Risk Buildings')">
+          <input type="checkbox" id="chk_lowbld" checked onchange="ltcTog('lowbld')">
           <span class="ltc-dot" style="background:#ff7700"></span> Low Risk Buildings
         </label>
 
-        <div class="ltc-section">Other</div>
-
+        <div class="ltc-sec">Other</div>
         <label class="ltc-row">
-          <input type="checkbox" checked onchange="togLayer(this,'Water Flow Direction')">
-          <span class="ltc-dot" style="background:#00eeff;border-color:#00aacc"></span> Water Flow Direction
+          <input type="checkbox" id="chk_flow" checked onchange="ltcTog('flow')">
+          <span class="ltc-dot" style="background:#00eeff"></span> Water Flow Direction
         </label>
 
       </div>
     </div>
 
     <script>
+    /* Map of key -> partial layer name to match */
+    var LTC_KEYS = {
+      flood:    'Flood Zone',
+      highzone: 'High Risk Zone',
+      modzone:  'Moderate Risk Zone',
+      lowzone:  'Low Risk Zone',
+      safe:     'Safe Buildings',
+      highbld:  'High Risk Buildings',
+      modbld:   'Moderate Risk Buildings',
+      lowbld:   'Low Risk Buildings',
+      flow:     'Water Flow Direction'
+    };
+
     var ltcOpen = true;
 
-    function togglePanel() {
+    function ltcTogglePanel() {
       ltcOpen = !ltcOpen;
-      var body = document.getElementById('ltc-body');
-      var btn  = document.getElementById('ltc-toggle-btn');
-      body.style.display = ltcOpen ? 'block' : 'none';
-      btn.style.borderRadius = ltcOpen ? '4px 4px 0 0' : '4px';
-      btn.innerHTML = ltcOpen
-        ? '&#9776; Layers &#9660;'
-        : '&#9776; Layers &#9658;';
+      document.getElementById('ltc-body').style.display = ltcOpen ? '' : 'none';
+      document.getElementById('ltc-toggle-btn').innerHTML =
+        ltcOpen ? '&#9776; Layers &#9660;' : '&#9776; Layers &#9658;';
+      document.getElementById('ltc-toggle-btn').style.borderRadius =
+        ltcOpen ? '4px 4px 0 0' : '4px';
     }
 
-    function getLeafletMap() {
-      for (var k in window) {
-        try {
-          if (window[k] && window[k]._layers &&
-              typeof window[k].eachLayer === 'function') return window[k];
-        } catch(e) {}
-      }
-      return null;
+    /* Wait until the Leaflet map variable exists, then wire up */
+    function ltcGetMap() {
+      return window['""" + map_var + """'] || null;
     }
 
-    function togLayer(chk, layerName) {
-      var lmap = getLeafletMap();
-      if (!lmap) return;
-      var show = chk.checked;
+    function ltcTog(key) {
+      var lmap = ltcGetMap();
+      if (!lmap) { setTimeout(function(){ ltcTog(key); }, 200); return; }
+
+      var chk    = document.getElementById('chk_' + key);
+      var show   = chk.checked;
+      var target = LTC_KEYS[key] || '';
+
       lmap.eachLayer(function(layer) {
-        if (layer.options && layer.options.name) {
-          var n = layer.options.name.replace(/[^\\x00-\\x7F]/g, '').trim();
-          var t = layerName.replace(/[^\\x00-\\x7F]/g, '').trim();
-          if (n.indexOf(t) !== -1 || t.indexOf(n) !== -1) {
-            try {
-              if (show) { lmap.addLayer(layer); }
-              else      { lmap.removeLayer(layer); }
-            } catch(e) {}
-          }
+        if (!layer.options || !layer.options.name) return;
+        /* strip non-ASCII (emojis) for comparison */
+        var n = layer.options.name.replace(/[^\\x20-\\x7E]/g, '').trim();
+        var t = target.replace(/[^\\x20-\\x7E]/g, '').trim();
+        if (n.indexOf(t) !== -1 || t.indexOf(n) !== -1) {
+          try {
+            if (show) lmap.addLayer(layer);
+            else      lmap.removeLayer(layer);
+          } catch(e) {}
         }
       });
     }
