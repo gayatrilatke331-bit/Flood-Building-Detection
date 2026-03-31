@@ -190,7 +190,6 @@ UTTARAKHAND_LOCATIONS = {
 def fetch_real_buildings(place_name, bbox):
     """Returns (GeoDataFrame, is_real_data: bool)"""
     minx, miny, maxx, maxy = bbox
-    # Try progressively larger bboxes if nothing found
     for expand in [0, 0.01, 0.025, 0.05]:
         try:
             b = [minx - expand, miny - expand,
@@ -225,12 +224,11 @@ def fetch_real_buildings(place_name, bbox):
                             pass
             if buildings:
                 gdf = gpd.GeoDataFrame(geometry=buildings, crs="EPSG:4326")
-                return gdf, True   # real data found
+                return gdf, True
         except Exception:
             pass
-    # Nothing found even after expansion — return empty
     empty = gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
-    return empty, False            # no real data
+    return empty, False
 
 
 # ── Fetch real waterways from OSM ─────────────────────────────────
@@ -272,7 +270,6 @@ def fetch_real_flood_zones(place_name, bbox, river_name):
                             from shapely.geometry import LineString
                             poly = LineString(coords)
                         if poly.is_valid and not poly.is_empty:
-                            # bigger buffer so river lines become flood areas
                             buffered = poly.buffer(0.006)
                             water_polys.append(buffered)
                     except:
@@ -293,7 +290,6 @@ def generate_fallback_flood(bbox):
     cy = (miny + maxy) / 2
     w  = (maxx - minx) * 0.35
     h  = (maxy - miny) * 0.55
-    # sinuous river-like polygon through center of bbox
     pts = []
     steps = 20
     for i in range(steps + 1):
@@ -584,7 +580,7 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
                 [lat2,lon2],
                 icon=folium.DivIcon(
                     html='<div style="font-size:16px;color:#00eeff;'
-                         'text-shadow:0 0 4px #000">▼</div>',
+                         'text-shadow:0 0 4px #000">&#9660;</div>',
                     icon_size=(18,18), icon_anchor=(9,9))
             ).add_to(flow_layer)
     flow_layer.add_to(m)
@@ -595,48 +591,48 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         "padding:7px 10px;z-index:9999;color:white;"
         "font-family:Arial;font-size:10px;"
         "border:1px solid #2a2a3a;min-width:130px;line-height:1.6'>"
-        "<b style='font-size:10px'>🗺️ Legend</b>"
+        "<b style='font-size:10px'>&#128506; Legend</b>"
         "<hr style='margin:4px 0;border-color:#2a2a3a'>"
         "<b style='font-size:9px;color:#aaa'>ZONES</b><br>"
-        "<span style='color:#0055ff'>██</span> Flood Zone<br>"
-        "<span style='color:#ff0000'>██</span> High Risk<br>"
-        "<span style='color:#ffcc00'>██</span> Moderate Risk<br>"
-        "<span style='color:#ff8800'>██</span> Low Risk<br>"
+        "<span style='color:#0055ff'>&#9608;&#9608;</span> Flood Zone<br>"
+        "<span style='color:#ff0000'>&#9608;&#9608;</span> High Risk<br>"
+        "<span style='color:#ffcc00'>&#9608;&#9608;</span> Moderate Risk<br>"
+        "<span style='color:#ff8800'>&#9608;&#9608;</span> Low Risk<br>"
         "<hr style='margin:4px 0;border-color:#2a2a3a'>"
         "<b style='font-size:9px;color:#aaa'>BUILDINGS</b><br>"
-        "<span style='color:#ff2222'>●</span> High Risk<br>"
-        "<span style='color:#ffbb00'>●</span> Moderate<br>"
-        "<span style='color:#ff7700'>●</span> Low Risk<br>"
-        "<span style='color:#00dd77'>■</span> Safe<br>"
+        "<span style='color:#ff2222'>&#9679;</span> High Risk<br>"
+        "<span style='color:#ffbb00'>&#9679;</span> Moderate<br>"
+        "<span style='color:#ff7700'>&#9679;</span> Low Risk<br>"
+        "<span style='color:#00dd77'>&#9632;</span> Safe<br>"
         "<hr style='margin:4px 0;border-color:#2a2a3a'>"
-        "<span style='color:#00eeff'>▼</span> Water Flow</div>"
+        "<span style='color:#00eeff'>&#9660;</span> Water Flow</div>"
     )
     m.get_root().html.add_child(folium.Element(legend))
 
-    # Inject toggle buttons INSIDE the map iframe
-    toggle_js = """
+    # ── Toggle buttons — raw string to avoid unicode escape errors ──
+    toggle_js = r"""
     <div id="layer-toggles" style="
         position:fixed; top:10px; left:50%; transform:translateX(-50%);
         z-index:9999; display:flex; flex-wrap:wrap; gap:5px;
         background:rgba(5,10,20,0.88); padding:8px 12px;
         border-radius:10px; border:1px solid #2a2a3a; max-width:90vw;">
-      <span style="color:#aaa;font-size:10px;width:100%;margin-bottom:2px;font-family:Arial">🎛️ Layer Toggles</span>
-      <button onclick="tog(this,'Flood Zone')"            style="background:#0055ff33;color:#4d9fff;border:1.5px solid #0055ff;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🌊 Flood</button>
-      <button onclick="tog(this,'High Risk Zone')"        style="background:#ff000033;color:#ff5555;border:1.5px solid #ff2222;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🔴 High Zone</button>
-      <button onclick="tog(this,'Moderate Risk Zone')"    style="background:#ffcc0033;color:#ffcc00;border:1.5px solid #ffcc00;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟡 Mod Zone</button>
-      <button onclick="tog(this,'Low Risk Zone')"         style="background:#ff880033;color:#ff9933;border:1.5px solid #ff8800;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟠 Low Zone</button>
-      <button onclick="tog(this,'Safe Buildings')"        style="background:#00dd7733;color:#00dd77;border:1.5px solid #00dd77;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟢 Safe</button>
-      <button onclick="tog(this,'High Risk Buildings')"   style="background:#ff222233;color:#ff7777;border:1.5px solid #ff4444;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🔴 High Bldgs</button>
-      <button onclick="tog(this,'Moderate Risk Buildings')" style="background:#ffbb0033;color:#ffbb00;border:1.5px solid #ffbb00;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟡 Mod Bldgs</button>
-      <button onclick="tog(this,'Low Risk Buildings')"    style="background:#ff770033;color:#ff9944;border:1.5px solid #ff7700;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🟠 Low Bldgs</button>
-      <button onclick="tog(this,'Water Flow Direction')"  style="background:#00eeff22;color:#00eeff;border:1.5px solid #00eeff;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">💧 Flow</button>
-      <button onclick="setAll(true)"  style="background:#ffffff15;color:#fff;border:1.5px solid #ffffff44;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">✅ All</button>
-      <button onclick="setAll(false)" style="background:#00000033;color:#aaa;border:1.5px solid #55555588;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">🚫 None</button>
+      <span style="color:#aaa;font-size:10px;width:100%;margin-bottom:2px;font-family:Arial">&#127917; Layer Toggles</span>
+      <button onclick="tog(this,'Flood Zone')"              style="background:#0055ff33;color:#4d9fff;border:1.5px solid #0055ff;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#127754; Flood</button>
+      <button onclick="tog(this,'High Risk Zone')"          style="background:#ff000033;color:#ff5555;border:1.5px solid #ff2222;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128308; High Zone</button>
+      <button onclick="tog(this,'Moderate Risk Zone')"      style="background:#ffcc0033;color:#ffcc00;border:1.5px solid #ffcc00;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128993; Mod Zone</button>
+      <button onclick="tog(this,'Low Risk Zone')"           style="background:#ff880033;color:#ff9933;border:1.5px solid #ff8800;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128992; Low Zone</button>
+      <button onclick="tog(this,'Safe Buildings')"          style="background:#00dd7733;color:#00dd77;border:1.5px solid #00dd77;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128994; Safe</button>
+      <button onclick="tog(this,'High Risk Buildings')"     style="background:#ff222233;color:#ff7777;border:1.5px solid #ff4444;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128308; High Bldgs</button>
+      <button onclick="tog(this,'Moderate Risk Buildings')" style="background:#ffbb0033;color:#ffbb00;border:1.5px solid #ffbb00;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128993; Mod Bldgs</button>
+      <button onclick="tog(this,'Low Risk Buildings')"      style="background:#ff770033;color:#ff9944;border:1.5px solid #ff7700;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128992; Low Bldgs</button>
+      <button onclick="tog(this,'Water Flow Direction')"    style="background:#00eeff22;color:#00eeff;border:1.5px solid #00eeff;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128167; Flow</button>
+      <button onclick="setAll(true)"  style="background:#ffffff15;color:#fff;border:1.5px solid #ffffff44;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#9989; All</button>
+      <button onclick="setAll(false)" style="background:#00000033;color:#aaa;border:1.5px solid #55555588;border-radius:14px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">&#128683; None</button>
     </div>
 
     <script>
     function getLeafletMap() {
-      for (let k in window) {
+      for (var k in window) {
         try {
           if (window[k] && window[k]._layers && typeof window[k].eachLayer === 'function') return window[k];
         } catch(e) {}
@@ -644,32 +640,36 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
       return null;
     }
 
-    function tog(btn, layerName) {
-      const lmap = getLeafletMap();
-      if (!lmap) return;
-      const isOff = btn.style.opacity === '0.3';
-      btn.style.opacity = isOff ? '1' : '0.3';
+    function stripEmoji(str) {
+      return str.replace(/[^\x00-\x7F]/g, '').trim();
+    }
 
+    function tog(btn, layerName) {
+      var lmap = getLeafletMap();
+      if (!lmap) return;
+      var isOff = btn.style.opacity === '0.3';
+      btn.style.opacity = isOff ? '1' : '0.3';
+      var target = stripEmoji(layerName).toLowerCase();
       lmap.eachLayer(function(layer) {
         if (layer.options && layer.options.name) {
-          const name = layer.options.name;
-          // strip emoji prefix for matching
-          const clean = name.replace(/[\u{1F300}-\u{1FFFF}]|[\u2600-\u27BF]/gu, '').trim();
-          const target = layerName.replace(/[\u{1F300}-\u{1FFFF}]|[\u2600-\u27BF]/gu, '').trim();
-          if (clean.includes(target) || target.includes(clean)) {
-            if (isOff) lmap.addLayer(layer);
-            else lmap.removeLayer(layer);
+          var clean = stripEmoji(layer.options.name).toLowerCase();
+          if (clean.indexOf(target) !== -1 || target.indexOf(clean) !== -1) {
+            try {
+              if (isOff) lmap.addLayer(layer);
+              else lmap.removeLayer(layer);
+            } catch(e) {}
           }
         }
       });
     }
 
     function setAll(visible) {
-      const lmap = getLeafletMap();
+      var lmap = getLeafletMap();
       if (!lmap) return;
-      document.querySelectorAll('#layer-toggles button').forEach(function(btn) {
-        btn.style.opacity = visible ? '1' : '0.3';
-      });
+      var btns = document.querySelectorAll('#layer-toggles button');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].style.opacity = visible ? '1' : '0.3';
+      }
       lmap.eachLayer(function(layer) {
         if (layer.options && layer.options.name) {
           try {
@@ -681,12 +681,13 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
     }
     </script>
     """
+
     m.get_root().html.add_child(folium.Element(toggle_js))
 
     plugins.Fullscreen(position="topleft").add_to(m)
     plugins.MiniMap(toggle_display=True, position="bottomleft",
                     width=130, height=130, zoom_level_offset=-5).add_to(m)
-    plugins.MousePosition(position="bottomright", prefix="📍 ").add_to(m)
+    plugins.MousePosition(position="bottomright", prefix="&#128205; ").add_to(m)
     folium.LayerControl(position="topright", collapsed=True).add_to(m)
     return m
 
@@ -820,7 +821,6 @@ if "done" not in st.session_state:
 
 # ── Run Analysis ──────────────────────────────────────────────────
 if run_btn:
-    # Clear cache so fresh OSM data is always fetched
     fetch_real_flood_zones.clear()
     fetch_real_buildings.clear()
 
