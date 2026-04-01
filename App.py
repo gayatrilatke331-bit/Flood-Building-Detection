@@ -71,15 +71,21 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     color: white; border: 1px solid #0f3460; margin-bottom: 8px;
     font-size: 0.85rem; border-left: 3px solid #1a6bff;
 }
+.district-info-card {
+    background: #111827; border-radius: 12px;
+    padding: 20px; color: white;
+    border: 1px solid #1f2937; height: 100%;
+}
 </style>
 """, unsafe_allow_html=True)
 
+# ── HERO ──────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="hero">
-    <h1>GeoFlood — Uttarakhand</h1>
-    <p>Real-time Flood Detection and Building Impact Assessment</p>
+    <h1>🌊 GeoFlood — Uttarakhand</h1>
+    <p>🛰️ Real-time Flood Detection and Building Impact Assessment</p>
     <p style="font-size:0.8rem;opacity:0.55;margin-top:2px">
-        Live OpenStreetMap Data — River Flood Zones — Risk Classification
+        📡 Live OpenStreetMap Data — 🏞️ River Flood Zones — ⚠️ Risk Classification
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -359,15 +365,15 @@ def impact_chart(total_buildings, flooded_buildings):
         wedgeprops={"width": 0.5, "edgecolor": "white",
                     "linewidth": 2})
     ax1.set_title(
-        "Building Impact", fontsize=13,
+        "🏠 Building Impact", fontsize=13,
         fontweight="bold", pad=15)
     patches = [
         mpatches.Patch(
             color="#E24B4A",
-            label="Flooded (" + str(flooded_buildings) + ")"),
+            label="🔴 Flooded (" + str(flooded_buildings) + ")"),
         mpatches.Patch(
             color="#9FE1CB",
-            label="Safe (" + str(safe) + ")")
+            label="🟢 Safe (" + str(safe) + ")")
     ]
     ax1.legend(
         handles=patches, loc="lower center",
@@ -385,7 +391,7 @@ def impact_chart(total_buildings, flooded_buildings):
             ha="center", va="bottom",
             fontsize=11, fontweight="bold")
     ax2.set_title(
-        "Building Count", fontsize=13, fontweight="bold")
+        "📊 Building Count", fontsize=13, fontweight="bold")
     ax2.set_ylabel("Number of buildings")
     ax2.spines[["top", "right"]].set_visible(False)
     ax2.set_ylim(0, max(total_buildings * 1.2, 10))
@@ -519,11 +525,11 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
                     "weight": 1.5,
                     "fillOpacity": 0.7
                 },
-                tooltip="Safe Building",
+                tooltip="✅ Safe Building",
                 popup=folium.Popup(
                     "<div style='font-family:Arial;"
                     "width:180px'>"
-                    "<b style='color:green'>Safe Building</b>"
+                    "<b style='color:green'>✅ Safe Building</b>"
                     "<hr>Status: Outside flood zone<br>"
                     "Lat: " + str(round(c.y, 5)) + "<br>"
                     "Lon: " + str(round(c.x, 5)) + "</div>",
@@ -543,17 +549,17 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         risk = get_risk_level(row.geometry, flood_gdf)
         cfg  = {
             "high": (
-                "#ff2222", "#aa0000", "HIGH RISK", "red",
-                high_bld, "Immediate evacuation required"),
+                "#ff2222", "#aa0000", "🔴 HIGH RISK", "red",
+                high_bld, "🚨 Immediate evacuation required"),
             "moderate": (
-                "#ffbb00", "#cc8800", "MODERATE RISK", "orange",
-                mod_bld, "Monitor closely, prepare to evacuate"),
+                "#ffbb00", "#cc8800", "🟡 MODERATE RISK", "orange",
+                mod_bld, "⚠️ Monitor closely, prepare to evacuate"),
             "low": (
-                "#ff7700", "#cc5500", "LOW RISK", "darkorange",
-                low_bld, "Stay alert, follow local updates"),
+                "#ff7700", "#cc5500", "🟠 LOW RISK", "darkorange",
+                low_bld, "👁️ Stay alert, follow local updates"),
         }.get(risk, (
-            "#ff7700", "#cc5500", "LOW RISK", "darkorange",
-            low_bld, "Stay alert"))
+            "#ff7700", "#cc5500", "🟠 LOW RISK", "darkorange",
+            low_bld, "👁️ Stay alert"))
         fill, border, label, color, target, action = cfg
 
         popup_html = (
@@ -562,15 +568,15 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             "<h4 style='color:" + color + ";margin:0 0 6px'>"
             + label + "</h4>"
             "<hr style='margin:4px 0'>"
-            "<b>Building:</b> #" + str(i + 1) + "<br>"
-            "<b>District:</b> " + loc_key + "<br>"
-            "<b>River:</b> " + loc["river"] + "<br>"
-            "<b>Risk:</b> <span style='color:" + color + ";"
+            "<b>🏢 Building:</b> #" + str(i + 1) + "<br>"
+            "<b>📍 District:</b> " + loc_key + "<br>"
+            "<b>🌊 River:</b> " + loc["river"] + "<br>"
+            "<b>⚠️ Risk:</b> <span style='color:" + color + ";"
             "font-weight:700'>" + risk.upper() + "</span><br>"
-            "<b>Lat:</b> " + str(round(c.y, 5)) + "<br>"
-            "<b>Lon:</b> " + str(round(c.x, 5)) + "<br>"
+            "<b>🗺️ Lat:</b> " + str(round(c.y, 5)) + "<br>"
+            "<b>🗺️ Lon:</b> " + str(round(c.x, 5)) + "<br>"
             "<hr style='margin:4px 0'>"
-            "<b>Action:</b> " + action + "</div>"
+            "<b>📋 Action:</b> " + action + "</div>"
         )
         popup = folium.Popup(popup_html, max_width=230)
 
@@ -611,7 +617,7 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             folium.PolyLine(
                 [[lat1, lon1], [lat2, lon2]],
                 color="#00eeff", weight=3, opacity=0.9,
-                tooltip="Water flow direction"
+                tooltip="💧 Water flow direction"
             ).add_to(flow_layer)
             folium.Marker(
                 [lat2, lon2],
@@ -650,7 +656,7 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             text-align: left;
             letter-spacing: 0.5px;
         ">
-            Map Legend  &#9660;
+            🗺️ Map Legend  &#9660;
         </button>
         <div id="legend-body" style="
             background: rgba(5,10,20,0.96);
@@ -663,32 +669,32 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             display: block;
         ">
             <b style="font-size:11px;color:#8ab4f8;
-            letter-spacing:1px">ZONES</b><br>
+            letter-spacing:1px">🗂️ ZONES</b><br>
             <span style="color:#3366ff;font-size:15px">
-            &#9646;</span> Flood Zone<br>
+            &#9646;</span> 🌊 Flood Zone<br>
             <span style="color:#ff2222;font-size:15px">
-            &#9646;</span> High Risk Core<br>
+            &#9646;</span> 🔴 High Risk Core<br>
             <span style="color:#ffcc00;font-size:15px">
-            &#9646;</span> Moderate Risk<br>
+            &#9646;</span> 🟡 Moderate Risk<br>
             <span style="color:#ff8800;font-size:15px">
-            &#9646;</span> Low Risk Zone<br>
+            &#9646;</span> 🟠 Low Risk Zone<br>
             <hr style="margin:7px 0;border-color:#2a2a4a">
             <b style="font-size:11px;color:#8ab4f8;
-            letter-spacing:1px">BUILDINGS</b><br>
+            letter-spacing:1px">🏢 BUILDINGS</b><br>
             <span style="color:#ff2222;font-size:13px">
-            &#9679;</span> High Risk<br>
+            &#9679;</span> 🔴 High Risk<br>
             <span style="color:#ffbb00;font-size:13px">
-            &#9679;</span> Moderate Risk<br>
+            &#9679;</span> 🟡 Moderate Risk<br>
             <span style="color:#ff7700;font-size:13px">
-            &#9679;</span> Low Risk<br>
+            &#9679;</span> 🟠 Low Risk<br>
             <span style="color:#00dd77;font-size:13px">
-            &#9632;</span> Safe Building<br>
+            &#9632;</span> ✅ Safe Building<br>
             <hr style="margin:7px 0;border-color:#2a2a4a">
             <span style="color:#00eeff">&#9660;</span>
-            Water Flow Direction<br>
+            💧 Water Flow Direction<br>
             <hr style="margin:7px 0;border-color:#2a2a4a">
             <small style="color:#888">
-            Click buildings for details</small>
+            🖱️ Click buildings for details</small>
         </div>
     </div>
     <script>
@@ -698,10 +704,10 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             "#legend-container button");
         if (body.style.display === "none") {
             body.style.display = "block";
-            btn.innerHTML = "Map Legend  &#9660;";
+            btn.innerHTML = "🗺️ Map Legend  &#9660;";
         } else {
             body.style.display = "none";
-            btn.innerHTML = "Map Legend  &#9650;";
+            btn.innerHTML = "🗺️ Map Legend  &#9650;";
         }
     }
     </script>
@@ -714,7 +720,7 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         width=120, height=120, zoom_level_offset=-5).add_to(m)
     plugins.MousePosition(
         position="bottomright",
-        prefix="Coordinates: ").add_to(m)
+        prefix="📍 Coordinates: ").add_to(m)
     folium.LayerControl(
         position="topright", collapsed=True).add_to(m)
     return m
@@ -728,41 +734,46 @@ def analyse_rainfall(mm, hours):
         return {
             "risk": "Low",
             "color": "#2ecc71",
-            "advice": "Light rainfall. Minimal flood risk.",
+            "advice": "🌦️ Light rainfall. Minimal flood risk.",
             "expected": "Less than 5 percent",
-            "intensity": round(intensity, 2)
+            "intensity": round(intensity, 2),
+            "emoji": "🟢"
         }
     elif mm < 65:
         return {
             "risk": "Moderate",
             "color": "#f39c12",
-            "advice": "Some areas may experience waterlogging.",
+            "advice": "🌧️ Some areas may experience waterlogging.",
             "expected": "5 to 20 percent",
-            "intensity": round(intensity, 2)
+            "intensity": round(intensity, 2),
+            "emoji": "🟡"
         }
     elif mm < 115:
         return {
             "risk": "High",
             "color": "#e74c3c",
-            "advice": "Heavy rainfall! Significant flood risk.",
+            "advice": "⛈️ Heavy rainfall! Significant flood risk.",
             "expected": "20 to 50 percent",
-            "intensity": round(intensity, 2)
+            "intensity": round(intensity, 2),
+            "emoji": "🔴"
         }
     else:
         return {
             "risk": "Extreme",
             "color": "#c0392b",
-            "advice": "Extreme rainfall! Immediate evacuation.",
+            "advice": "🚨 Extreme rainfall! Immediate evacuation.",
             "expected": "More than 50 percent",
-            "intensity": round(intensity, 2)
+            "intensity": round(intensity, 2),
+            "emoji": "🆘"
         }
 
 
+# ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## Uttarakhand Districts")
+    st.markdown("## 🗺️ Uttarakhand Districts")
     st.markdown("---")
     selected = st.selectbox(
-        "Select District",
+        "📍 Select District",
         options=list(UTTARAKHAND_LOCATIONS.keys()),
         index=0
     )
@@ -773,31 +784,38 @@ with st.sidebar:
         "Moderate": "#ffcc00",
         "Low":     "#00cc66"
     }
+    risk_emojis = {
+        "Extreme": "🆘",
+        "High":    "🔴",
+        "Moderate": "🟡",
+        "Low":     "🟢"
+    }
     rc = risk_colors.get(loc["risk"], "#ffffff")
+    re = risk_emojis.get(loc["risk"], "⚠️")
     st.markdown(
         "<div class='loc-card'>"
-        "<b>" + selected + "</b><br>"
+        "<b>📍 " + selected + "</b><br>"
         "<small style='opacity:0.7'>"
         + loc["description"] + "</small><br><br>"
-        "<b>River:</b> " + loc["river"] + "<br>"
-        "<b>Risk:</b> <span style='color:" + rc + ";"
-        "font-weight:700'>" + loc["risk"] + "</span>"
+        "<b>🌊 River:</b> " + loc["river"] + "<br>"
+        "<b>⚠️ Risk:</b> <span style='color:" + rc + ";"
+        "font-weight:700'>" + re + " " + loc["risk"] + "</span>"
         "</div>",
         unsafe_allow_html=True)
     st.markdown("---")
-    with st.expander("Detection Settings", expanded=False):
+    with st.expander("⚙️ Detection Settings", expanded=False):
         ndwi_threshold = st.slider(
             "NDWI Threshold", 0.0, 1.0, 0.2, 0.05)
-    with st.expander("Rainfall Analysis", expanded=True):
+    with st.expander("🌧️ Rainfall Analysis", expanded=True):
         rainfall_mm = st.number_input(
-            "Rainfall amount in mm",
+            "💧 Rainfall amount in mm",
             min_value=0.0, max_value=1000.0,
             value=0.0, step=10.0)
         rainfall_hours = st.slider(
-            "Duration in hours", 1, 72, 24)
+            "⏱️ Duration in hours", 1, 72, 24)
     st.markdown("---")
     run_btn = st.button(
-        "Run Analysis",
+        "🚀 Run Analysis",
         type="primary",
         use_container_width=True
     )
@@ -805,58 +823,59 @@ with st.sidebar:
     st.markdown(
         "<div style='color:gray;font-size:0.72rem;"
         "text-align:center'>"
-        "GeoFlood v1.0 — Uttarakhand<br>"
-        "Dinesh - Likhitha - Gayatri<br>"
-        "<small>Data: OpenStreetMap</small></div>",
+        "🌊 GeoFlood v1.0 — Uttarakhand<br>"
+        "👥 Dinesh · Likhitha · Gayatri<br>"
+        "<small>📡 Data: OpenStreetMap</small></div>",
         unsafe_allow_html=True)
 
+# ── RAINFALL SECTION ──────────────────────────────────────────────────────────
 if rainfall_mm > 0:
     r = analyse_rainfall(rainfall_mm, rainfall_hours)
     if r:
         st.markdown(
             "<div class='section-box'>"
             "<div class='section-title'>"
-            "Rainfall Risk Assessment</div>"
+            "🌧️ Rainfall Risk Assessment</div>"
             "</div>",
             unsafe_allow_html=True)
         rc1, rc2, rc3, rc4 = st.columns(4)
         rc1.markdown(
             "<div class='metric-card rain-card'>"
-            "<div class='label'>Rainfall</div>"
+            "<div class='label'>💧 Rainfall</div>"
             "<div class='value'>"
             + str(rainfall_mm) + "mm</div>"
             "<div class='sub'>Total</div></div>",
             unsafe_allow_html=True)
         rc2.markdown(
             "<div class='metric-card rain-card'>"
-            "<div class='label'>Duration</div>"
+            "<div class='label'>⏱️ Duration</div>"
             "<div class='value'>"
             + str(rainfall_hours) + "h</div>"
             "<div class='sub'>Hours</div></div>",
             unsafe_allow_html=True)
         rc3.markdown(
             "<div class='metric-card rain-card'>"
-            "<div class='label'>Intensity</div>"
+            "<div class='label'>⚡ Intensity</div>"
             "<div class='value'>"
             + str(r["intensity"]) + "</div>"
             "<div class='sub'>mm per hour</div></div>",
             unsafe_allow_html=True)
         rc4.markdown(
             "<div class='metric-card rain-card'>"
-            "<div class='label'>Risk</div>"
-            "<div class='value'>!</div>"
+            "<div class='label'>⚠️ Risk</div>"
+            "<div class='value'>" + r["emoji"] + "</div>"
             "<div class='sub' style='color:"
             + r["color"] + "'>"
             + r["risk"] + "</div></div>",
             unsafe_allow_html=True)
         st.markdown(
             "<div class='rain-result'>"
-            "<b>Risk Level:</b> "
+            "<b>⚠️ Risk Level:</b> "
             "<span style='color:" + r["color"] + ";"
-            "font-weight:700'>" + r["risk"] + "</span>"
-            " | <b>Expected affected:</b> "
+            "font-weight:700'>" + r["emoji"] + " " + r["risk"] + "</span>"
+            " | <b>📊 Expected affected:</b> "
             + r["expected"] + "<br><br>"
-            "Advisory: " + r["advice"] + "</div>",
+            "📋 Advisory: " + r["advice"] + "</div>",
             unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -867,19 +886,19 @@ if run_btn:
     loc  = UTTARAKHAND_LOCATIONS[selected]
     bbox = loc["flood_bbox"]
     with st.spinner(
-            "Fetching real flood zones for "
+            "🌊 Fetching real flood zones for "
             + selected + "..."):
         flood_gdf = fetch_real_flood_zones(
             loc["place"], bbox, loc["river"])
     with st.spinner(
-            "Fetching real buildings from OpenStreetMap..."):
+            "🏢 Fetching real buildings from OpenStreetMap..."):
         buildings_gdf = fetch_real_buildings(
             loc["place"], bbox)
     with st.spinner(
-            "Running spatial intersection analysis..."):
+            "🔍 Running spatial intersection analysis..."):
         flooded_gdf = find_flooded_buildings(
             buildings_gdf, flood_gdf)
-    with st.spinner("Building interactive map..."):
+    with st.spinner("🗺️ Building interactive map..."):
         map_obj  = create_map(
             flood_gdf, buildings_gdf,
             flooded_gdf, selected)
@@ -899,115 +918,136 @@ if run_btn:
     st.session_state.place    = selected
     st.session_state.river    = loc["river"]
 
+# ── RESULTS ───────────────────────────────────────────────────────────────────
 if st.session_state.done:
     total   = st.session_state.total
     flooded = st.session_state.flooded
     pct     = st.session_state.pct
     safe    = st.session_state.safe
 
+    # ── IMPACT METRICS ────────────────────────────────────────────────────────
     st.markdown(
         "<div class='section-box'>"
-        "<div class='section-title'>Impact Metrics</div>"
+        "<div class='section-title'>📊 Impact Metrics</div>"
         "</div>",
         unsafe_allow_html=True)
 
     m1, m2, m3 = st.columns(3)
     m1.markdown(
         "<div class='metric-card total-card'>"
-        "<div class='label'>Total Buildings</div>"
+        "<div class='label'>🏢 Total Buildings</div>"
         "<div class='value'>" + str(total) + "</div>"
         "<div class='sub'>Found in area</div></div>",
         unsafe_allow_html=True)
     m2.markdown(
         "<div class='metric-card flood-card'>"
-        "<div class='label'>Flooded Buildings</div>"
+        "<div class='label'>🌊 Flooded Buildings</div>"
         "<div class='value'>" + str(flooded) + "</div>"
-        "<div class='sub' style='color:#e74c3c'>"
+        "<div class='sub' style='color:#e74c3c'>🔴 "
         + str(pct) + "% affected</div></div>",
         unsafe_allow_html=True)
     m3.markdown(
         "<div class='metric-card safe-card'>"
-        "<div class='label'>Safe Buildings</div>"
+        "<div class='label'>✅ Safe Buildings</div>"
         "<div class='value'>" + str(safe) + "</div>"
-        "<div class='sub' style='color:#2ecc71'>"
+        "<div class='sub' style='color:#2ecc71'>🟢 "
         + str(100 - pct) + "% safe</div></div>",
         unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # ── RISK CLASSIFICATION ───────────────────────────────────────────────────
     st.markdown(
         "<div class='section-box'>"
-        "<div class='section-title'>Risk Classification</div>"
+        "<div class='section-title'>🎯 Risk Classification</div>"
         "<div style='color:#ccc;font-size:0.88rem;line-height:2'>"
-        "<span class='risk-badge badge-high'>High Risk</span>"
-        " Over 70 percent inside flood zone — Evacuate now<br>"
+        "<span class='risk-badge badge-high'>🔴 High Risk</span>"
+        " Over 70% inside flood zone — 🚨 Evacuate now<br>"
         "<span class='risk-badge badge-moderate'>"
-        "Moderate Risk</span>"
-        " 30 to 70 percent inside flood zone — Monitor<br>"
-        "<span class='risk-badge badge-low'>Low Risk</span>"
-        " Under 30 percent inside flood zone — Stay alert<br>"
-        "<span class='risk-badge badge-safe'>Safe</span>"
+        "🟡 Moderate Risk</span>"
+        " 30–70% inside flood zone — ⚠️ Monitor<br>"
+        "<span class='risk-badge badge-low'>🟠 Low Risk</span>"
+        " Under 30% inside flood zone — 👁️ Stay alert<br>"
+        "<span class='risk-badge badge-safe'>✅ Safe</span>"
         " Outside flood zone — No immediate action"
         "</div></div>",
         unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Map and Chart same size side by side
-    map_col, chart_col = st.columns(2)
+    # ── MAP FULL WIDTH (FIRST) ────────────────────────────────────────────────
+    st.markdown(
+        "<div class='section-title' style='color:white;"
+        "font-size:1rem;font-weight:700'>"
+        "🗺️ Interactive Flood Map</div>",
+        unsafe_allow_html=True)
+    st.components.v1.html(
+        st.session_state.map_html, height=520)
 
-    with map_col:
-        st.markdown(
-            "<div class='section-title' style='color:white;"
-            "font-size:1rem;font-weight:700'>"
-            "Interactive Flood Map</div>",
-            unsafe_allow_html=True)
-        st.components.v1.html(
-            st.session_state.map_html, height=480)
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── CHART + DISTRICT INFO SIDE BY SIDE (BELOW MAP) ───────────────────────
+    chart_col, info_col = st.columns(2)
 
     with chart_col:
         st.markdown(
             "<div class='section-title' style='color:white;"
             "font-size:1rem;font-weight:700'>"
-            "Impact Summary</div>",
+            "📊 Impact Summary</div>",
             unsafe_allow_html=True)
         fig = impact_chart(total, flooded)
         st.pyplot(fig)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
+    with info_col:
         st.markdown(
-            "<div class='section-box'>"
-            "<div style='color:#ccc;font-size:0.85rem'>"
-            "<b style='color:white'>District Info</b><br><br>"
-            "<b>District:</b> "
-            + st.session_state.place + "<br>"
-            "<b>River:</b> "
-            + st.session_state.river + "<br>"
-            "<b>Total Buildings:</b> "
-            + str(total) + "<br>"
-            "<b>Flooded:</b> "
-            + str(flooded) + " (" + str(pct) + "%)<br>"
-            "<b>Safe:</b> "
-            + str(safe) + " ("
-            + str(100 - pct) + "%)<br><br>"
-            "<b style='color:white'>Data Source</b><br>"
-            "<small style='color:#888'>"
-            "Live data from OpenStreetMap<br>"
-            "River data from Overpass API<br>"
-            "Updated every hour</small>"
-            "</div></div>",
+            "<div class='section-title' style='color:white;"
+            "font-size:1rem;font-weight:700'>"
+            "📋 District Information</div>",
+            unsafe_allow_html=True)
+        st.markdown(
+            "<div class='district-info-card'>"
+            "<p style='font-size:1rem;font-weight:700;"
+            "color:white;margin-bottom:12px'>"
+            "📍 " + st.session_state.place + "</p>"
+            "<hr style='border-color:#1f2937;margin:8px 0'>"
+            "<table style='width:100%;font-size:0.9rem;"
+            "color:#ccc;border-collapse:collapse'>"
+            "<tr><td style='padding:6px 0'>🏙️ <b style='color:white'>District</b></td>"
+            "<td style='color:#8ab4f8'>" + st.session_state.place + "</td></tr>"
+            "<tr><td style='padding:6px 0'>🌊 <b style='color:white'>River</b></td>"
+            "<td style='color:#8ab4f8'>" + st.session_state.river + "</td></tr>"
+            "<tr><td style='padding:6px 0'>🏢 <b style='color:white'>Total Buildings</b></td>"
+            "<td style='color:#3498db;font-weight:700'>" + str(total) + "</td></tr>"
+            "<tr><td style='padding:6px 0'>🌊 <b style='color:white'>Flooded</b></td>"
+            "<td style='color:#e74c3c;font-weight:700'>"
+            + str(flooded) + " <small>(" + str(pct) + "%)</small></td></tr>"
+            "<tr><td style='padding:6px 0'>✅ <b style='color:white'>Safe</b></td>"
+            "<td style='color:#2ecc71;font-weight:700'>"
+            + str(safe) + " <small>(" + str(100 - pct) + "%)</small></td></tr>"
+            "</table>"
+            "<hr style='border-color:#1f2937;margin:12px 0'>"
+            "<p style='font-size:0.85rem;font-weight:700;"
+            "color:white;margin-bottom:6px'>📡 Data Source</p>"
+            "<p style='font-size:0.78rem;color:#888;margin:2px 0'>"
+            "🌍 Live data from OpenStreetMap</p>"
+            "<p style='font-size:0.78rem;color:#888;margin:2px 0'>"
+            "🏞️ River data from Overpass API</p>"
+            "<p style='font-size:0.78rem;color:#888;margin:2px 0'>"
+            "🔄 Updated every hour</p>"
+            "</div>",
             unsafe_allow_html=True)
 
+    # ── BOTTOM BANNER ─────────────────────────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
         "<div class='info-banner'>"
-        "Analysis complete — "
+        "✅ Analysis complete — "
         "<b>" + st.session_state.place + "</b> | "
-        "River: " + st.session_state.river + " | "
-        + str(total) + " buildings | "
-        + str(flooded) + " flooded (" + str(pct) + "%) | "
-        + str(safe) + " safe (" + str(100 - pct) + "%)<br>"
+        "🌊 River: " + st.session_state.river + " | "
+        "🏢 " + str(total) + " buildings | "
+        "🔴 " + str(flooded) + " flooded (" + str(pct) + "%) | "
+        "🟢 " + str(safe) + " safe (" + str(100 - pct) + "%)<br>"
         "<small style='opacity:0.7'>"
-        "Data source: OpenStreetMap (live)</small>"
+        "📡 Data source: OpenStreetMap (live)</small>"
         "</div>",
         unsafe_allow_html=True)
