@@ -2,6 +2,9 @@ import sys
 import os
 import io
 import base64
+import tempfile
+import pathlib
+
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 import streamlit as st
@@ -9,7 +12,7 @@ import streamlit.components.v1 as components
 import folium
 from folium import plugins
 import geopandas as gpd
-from shapely.geometry import Polygon, box
+from shapely.geometry import Polygon, box, LineString
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -316,7 +319,6 @@ def fetch_real_flood_zones(place_name, bbox, river_name):
                         pass
                 elif len(coords) >= 2:
                     try:
-                        from shapely.geometry import LineString
                         line = LineString(coords)
                         buffered = line.buffer(0.004)
                         water_polys.append(buffered)
@@ -540,10 +542,8 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
     flooded_idx = set(flooded_gdf.index.tolist())
     safe_layer  = folium.FeatureGroup(
         name="Safe Buildings", show=True)
-    safe_count  = 0
     for idx, row in buildings_gdf.iterrows():
         if idx not in flooded_idx:
-            safe_count += 1
             c = row.geometry.centroid
             folium.GeoJson(
                 row.geometry.__geo_interface__,
@@ -661,7 +661,6 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             ).add_to(flow_layer)
     flow_layer.add_to(m)
 
-    # Toggleable legend in bottom-right corner
     legend_html = """
     <div id="legend-container" style="
         position: fixed;
@@ -696,40 +695,27 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             min-width: 185px;
             display: block;
         ">
-            <b style="font-size:11px;color:#8ab4f8;
-            letter-spacing:1px">🗂️ ZONES</b><br>
-            <span style="color:#3366ff;font-size:15px">
-            &#9646;</span> 🌊 Flood Zone<br>
-            <span style="color:#ff2222;font-size:15px">
-            &#9646;</span> 🔴 High Risk Core<br>
-            <span style="color:#ffcc00;font-size:15px">
-            &#9646;</span> 🟡 Moderate Risk<br>
-            <span style="color:#ff8800;font-size:15px">
-            &#9646;</span> 🟠 Low Risk Zone<br>
+            <b style="font-size:11px;color:#8ab4f8;letter-spacing:1px">🗂️ ZONES</b><br>
+            <span style="color:#3366ff;font-size:15px">&#9646;</span> 🌊 Flood Zone<br>
+            <span style="color:#ff2222;font-size:15px">&#9646;</span> 🔴 High Risk Core<br>
+            <span style="color:#ffcc00;font-size:15px">&#9646;</span> 🟡 Moderate Risk<br>
+            <span style="color:#ff8800;font-size:15px">&#9646;</span> 🟠 Low Risk Zone<br>
             <hr style="margin:7px 0;border-color:#2a2a4a">
-            <b style="font-size:11px;color:#8ab4f8;
-            letter-spacing:1px">🏢 BUILDINGS</b><br>
-            <span style="color:#ff2222;font-size:13px">
-            &#9679;</span> 🔴 High Risk<br>
-            <span style="color:#ffbb00;font-size:13px">
-            &#9679;</span> 🟡 Moderate Risk<br>
-            <span style="color:#ff7700;font-size:13px">
-            &#9679;</span> 🟠 Low Risk<br>
-            <span style="color:#00dd77;font-size:13px">
-            &#9632;</span> ✅ Safe Building<br>
+            <b style="font-size:11px;color:#8ab4f8;letter-spacing:1px">🏢 BUILDINGS</b><br>
+            <span style="color:#ff2222;font-size:13px">&#9679;</span> 🔴 High Risk<br>
+            <span style="color:#ffbb00;font-size:13px">&#9679;</span> 🟡 Moderate Risk<br>
+            <span style="color:#ff7700;font-size:13px">&#9679;</span> 🟠 Low Risk<br>
+            <span style="color:#00dd77;font-size:13px">&#9632;</span> ✅ Safe Building<br>
             <hr style="margin:7px 0;border-color:#2a2a4a">
-            <span style="color:#00eeff">&#9660;</span>
-            💧 Water Flow Direction<br>
+            <span style="color:#00eeff">&#9660;</span> 💧 Water Flow Direction<br>
             <hr style="margin:7px 0;border-color:#2a2a4a">
-            <small style="color:#888">
-            🖱️ Click buildings for details</small>
+            <small style="color:#888">🖱️ Click buildings for details</small>
         </div>
     </div>
     <script>
     function toggleLegend() {
         var body = document.getElementById("legend-body");
-        var btn  = document.querySelector(
-            "#legend-container button");
+        var btn  = document.querySelector("#legend-container button");
         if (body.style.display === "none") {
             body.style.display = "block";
             btn.innerHTML = "🗺️ Map Legend  &#9660;";
@@ -752,7 +738,6 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
     folium.LayerControl(
         position="topright", collapsed=False).add_to(m)
 
-    # ── Dark-themed layer control override ───────────────────────────────────
     dark_layer_css = """
     <style>
     .leaflet-control-layers {
@@ -817,15 +802,19 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         margin-top: 2px;
         font-family: 'Inter', Arial, sans-serif;
     }
-    .leaflet-control-layers-list::-webkit-scrollbar { width: 4px; }
-    .leaflet-control-layers-list::-webkit-scrollbar-track {
-        background: #0d1117; }
-    .leaflet-control-layers-list::-webkit-scrollbar-thumb {
-        background: #1e3a5f; border-radius: 4px; }
     </style>
     """
     m.get_root().html.add_child(folium.Element(dark_layer_css))
     return m
+
+
+def render_map_html(map_obj):
+    """Save folium map and return HTML string for reliable rendering."""
+    tmp_dir  = pathlib.Path(tempfile.gettempdir())
+    tmp_path = tmp_dir / "geoflood_map.html"
+    map_obj.save(str(tmp_path))
+    html_content = tmp_path.read_text(encoding="utf-8")
+    return html_content
 
 
 def analyse_rainfall(mm, hours):
@@ -987,42 +976,30 @@ if "done" not in st.session_state:
 if run_btn:
     loc  = UTTARAKHAND_LOCATIONS[selected]
     bbox = loc["flood_bbox"]
-    with st.spinner(
-            "🌊 Fetching real flood zones for "
-            + selected + "..."):
+    with st.spinner("🌊 Fetching real flood zones for " + selected + "..."):
         flood_gdf = fetch_real_flood_zones(
             loc["place"], bbox, loc["river"])
-    with st.spinner(
-            "🏢 Fetching real buildings from OpenStreetMap..."):
-        buildings_gdf = fetch_real_buildings(
-            loc["place"], bbox)
-    with st.spinner(
-            "🔍 Running spatial intersection analysis..."):
-        flooded_gdf = find_flooded_buildings(
-            buildings_gdf, flood_gdf)
+    with st.spinner("🏢 Fetching real buildings from OpenStreetMap..."):
+        buildings_gdf = fetch_real_buildings(loc["place"], bbox)
+    with st.spinner("🔍 Running spatial intersection analysis..."):
+        flooded_gdf = find_flooded_buildings(buildings_gdf, flood_gdf)
     with st.spinner("🗺️ Building interactive map..."):
-        map_obj  = create_map(
-            flood_gdf, buildings_gdf,
-            flooded_gdf, selected)
-        import tempfile, pathlib
-        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as tmp:
-            tmp_path = tmp.name
-        map_obj.save(tmp_path)
-        map_html = pathlib.Path(tmp_path).read_text(encoding="utf-8")
+        map_obj  = create_map(flood_gdf, buildings_gdf, flooded_gdf, selected)
+        map_html = render_map_html(map_obj)
 
     total   = len(buildings_gdf)
     flooded = len(flooded_gdf)
     pct     = round((flooded / total) * 100, 1) if total else 0
     safe    = total - flooded
 
-    st.session_state.done     = True
-    st.session_state.total    = total
-    st.session_state.flooded  = flooded
-    st.session_state.pct      = pct
-    st.session_state.safe     = safe
-    st.session_state.map_html = map_html
-    st.session_state.place    = selected
-    st.session_state.river    = loc["river"]
+    st.session_state.done      = True
+    st.session_state.total     = total
+    st.session_state.flooded   = flooded
+    st.session_state.pct       = pct
+    st.session_state.safe      = safe
+    st.session_state.map_html  = map_html
+    st.session_state.place     = selected
+    st.session_state.river     = loc["river"]
 
 # ── RESULTS ───────────────────────────────────────────────────────────────────
 if st.session_state.done:
@@ -1081,18 +1058,31 @@ if st.session_state.done:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── MAP FULL WIDTH (FIRST) ────────────────────────────────────────────────
+    # ── MAP — FULL WIDTH, RENDERED VIA SRCDOC IFRAME ─────────────────────────
     st.markdown(
         "<div class='section-title' style='color:white;"
         "font-size:1rem;font-weight:700'>"
         "🗺️ Interactive Flood Map</div>",
         unsafe_allow_html=True)
-    components.html(
-        st.session_state.map_html, height=560, scrolling=False)
+
+    # Encode to base64 and render via data URI inside an iframe
+    # This is the most reliable method across all Streamlit versions
+    encoded = base64.b64encode(
+        st.session_state.map_html.encode("utf-8")
+    ).decode("utf-8")
+
+    map_iframe_code = (
+        "<iframe src='data:text/html;base64," + encoded + "' "
+        "width='100%' height='560' "
+        "style='border:none;border-radius:12px;display:block;' "
+        "allowfullscreen='true'>"
+        "</iframe>"
+    )
+    components.html(map_iframe_code, height=575, scrolling=False)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── CHART + DISTRICT INFO SIDE BY SIDE — EQUAL HEIGHT ────────────────────
+    # ── CHART + DISTRICT INFO SIDE BY SIDE ───────────────────────────────────
     chart_col, info_col = st.columns(2)
 
     with chart_col:
@@ -1113,10 +1103,14 @@ if st.session_state.done:
 
     with info_col:
         loc_risk     = UTTARAKHAND_LOCATIONS[st.session_state.place]["risk"]
-        risk_col_map = {"Extreme":"#ff2222","High":"#ffaa00",
-                        "Moderate":"#ffcc00","Low":"#00cc66"}
-        risk_emo_map = {"Extreme":"🆘","High":"🔴",
-                        "Moderate":"🟡","Low":"🟢"}
+        risk_col_map = {
+            "Extreme": "#ff2222", "High": "#ffaa00",
+            "Moderate": "#ffcc00", "Low": "#00cc66"
+        }
+        risk_emo_map = {
+            "Extreme": "🆘", "High": "🔴",
+            "Moderate": "🟡", "Low": "🟢"
+        }
         rcol = risk_col_map.get(loc_risk, "#ffffff")
         remo = risk_emo_map.get(loc_risk, "⚠️")
         st.markdown(
@@ -1147,12 +1141,14 @@ if st.session_state.done:
             "<div class='info-row'>"
             "<span class='info-label'>🌊 Flooded</span>"
             "<span class='info-value' style='color:#e74c3c'>"
-            + str(flooded) + " <small style='color:#666'>(" + str(pct) + "%)</small>"
+            + str(flooded)
+            + " <small style='color:#666'>(" + str(pct) + "%)</small>"
             "</span></div>"
             "<div class='info-row'>"
             "<span class='info-label'>✅ Safe</span>"
             "<span class='info-value' style='color:#2ecc71'>"
-            + str(safe) + " <small style='color:#666'>(" + str(100 - pct) + "%)</small>"
+            + str(safe)
+            + " <small style='color:#666'>(" + str(100 - pct) + "%)</small>"
             "</span></div>"
             "<div style='margin-top:16px;padding-top:12px;"
             "border-top:1px solid #1f2937'>"
