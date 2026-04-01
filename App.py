@@ -1004,7 +1004,11 @@ if run_btn:
         map_obj  = create_map(
             flood_gdf, buildings_gdf,
             flooded_gdf, selected)
-        map_html = map_obj._repr_html_()
+        import tempfile, pathlib
+        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as tmp:
+            tmp_path = tmp.name
+        map_obj.save(tmp_path)
+        map_html = pathlib.Path(tmp_path).read_text(encoding="utf-8")
 
     total   = len(buildings_gdf)
     flooded = len(flooded_gdf)
@@ -1084,7 +1088,7 @@ if st.session_state.done:
         "🗺️ Interactive Flood Map</div>",
         unsafe_allow_html=True)
     components.html(
-        st.session_state.map_html, height=500, scrolling=False)
+        st.session_state.map_html, height=560, scrolling=False)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
