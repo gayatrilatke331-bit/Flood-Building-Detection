@@ -66,11 +66,6 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     border-radius: 10px; padding: 14px 18px; color: white;
     border-left: 4px solid #2ecc71; margin-top: 16px;
 }
-.step-box {
-    background: #1a1a2e; border-radius: 8px;
-    padding: 12px 16px; margin: 6px 0; color: white;
-    border-left: 3px solid #1a6bff; font-size: 0.88rem;
-}
 .loc-card {
     background: #1a1a2e; border-radius: 10px; padding: 14px;
     color: white; border: 1px solid #0f3460; margin-bottom: 8px;
@@ -81,10 +76,10 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
 st.markdown("""
 <div class="hero">
-    <h1>🌊 GeoFlood — Uttarakhand</h1>
+    <h1>GeoFlood — Uttarakhand</h1>
     <p>Real-time Flood Detection and Building Impact Assessment</p>
     <p style="font-size:0.8rem;opacity:0.55;margin-top:2px">
-        Live OpenStreetMap Data • River Flood Zones • Risk Classification
+        Live OpenStreetMap Data — River Flood Zones — Risk Classification
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -93,92 +88,92 @@ UTTARAKHAND_LOCATIONS = {
     "Haridwar": {
         "place":       "Haridwar, Uttarakhand, India",
         "center":      [29.9457, 78.1642],
-        "zoom":        14,
+        "zoom":        15,
         "river":       "Ganga",
         "risk":        "Extreme",
         "description": "Ganga river flooding near Har Ki Pauri ghats",
-        "flood_bbox":  [78.150, 29.935, 78.190, 29.960],
+        "flood_bbox":  [78.140, 29.930, 78.200, 29.970],
     },
     "Rishikesh": {
         "place":       "Rishikesh, Uttarakhand, India",
         "center":      [30.0869, 78.2676],
-        "zoom":        14,
+        "zoom":        15,
         "river":       "Ganga",
         "risk":        "High",
         "description": "Ganga river overflow near Laxman Jhula",
-        "flood_bbox":  [78.255, 30.075, 78.285, 30.100],
+        "flood_bbox":  [78.245, 30.065, 78.295, 30.110],
     },
     "Dehradun": {
         "place":       "Dehradun, Uttarakhand, India",
         "center":      [30.3165, 78.0322],
-        "zoom":        13,
+        "zoom":        14,
         "river":       "Rispana and Bindal",
         "risk":        "High",
         "description": "Seasonal flooding in Rispana and Bindal river basins",
-        "flood_bbox":  [78.015, 30.305, 78.055, 30.330],
+        "flood_bbox":  [78.000, 30.295, 78.080, 30.345],
     },
     "Nainital": {
         "place":       "Nainital, Uttarakhand, India",
         "center":      [29.3919, 79.4542],
-        "zoom":        14,
+        "zoom":        15,
         "river":       "Naini Lake",
         "risk":        "Moderate",
         "description": "Lake overflow and landslide-induced flooding",
-        "flood_bbox":  [79.445, 29.385, 79.465, 29.400],
+        "flood_bbox":  [79.435, 29.380, 79.475, 29.410],
     },
     "Rudraprayag": {
         "place":       "Rudraprayag, Uttarakhand, India",
         "center":      [30.2847, 78.9812],
-        "zoom":        14,
+        "zoom":        15,
         "river":       "Alaknanda and Mandakini",
         "risk":        "Extreme",
         "description": "River confluence flooding — Kedarnath disaster zone",
-        "flood_bbox":  [78.975, 30.278, 78.990, 30.292],
+        "flood_bbox":  [78.965, 30.270, 78.998, 30.300],
     },
     "Uttarkashi": {
         "place":       "Uttarkashi, Uttarakhand, India",
         "center":      [30.7268, 78.4354],
-        "zoom":        14,
+        "zoom":        15,
         "river":       "Bhagirathi",
         "risk":        "High",
         "description": "Bhagirathi river flooding in narrow valley",
-        "flood_bbox":  [78.428, 30.720, 78.445, 30.735],
+        "flood_bbox":  [78.420, 30.715, 78.455, 30.742],
     },
     "Chamoli": {
         "place":       "Chamoli, Uttarakhand, India",
         "center":      [30.3993, 79.3253],
-        "zoom":        14,
+        "zoom":        15,
         "river":       "Alaknanda",
         "risk":        "Extreme",
         "description": "Alaknanda river — glacial outburst flood risk",
-        "flood_bbox":  [79.318, 30.393, 79.335, 30.407],
+        "flood_bbox":  [79.308, 30.385, 79.345, 30.415],
     },
     "Pithoragarh": {
         "place":       "Pithoragarh, Uttarakhand, India",
         "center":      [29.5830, 80.2181],
-        "zoom":        14,
+        "zoom":        15,
         "river":       "Kali and Saryu",
         "risk":        "High",
         "description": "Kali and Saryu river flooding in border region",
-        "flood_bbox":  [80.210, 29.576, 80.228, 29.591],
+        "flood_bbox":  [80.200, 29.568, 80.235, 29.598],
     },
     "Tehri": {
         "place":       "Tehri Garhwal, Uttarakhand, India",
         "center":      [30.3784, 78.4800],
-        "zoom":        13,
+        "zoom":        14,
         "river":       "Bhilangana",
         "risk":        "Moderate",
         "description": "Bhilangana river and Tehri dam downstream risk",
-        "flood_bbox":  [78.472, 30.370, 78.490, 30.388],
+        "flood_bbox":  [78.462, 30.362, 78.500, 30.395],
     },
     "Roorkee": {
         "place":       "Roorkee, Uttarakhand, India",
         "center":      [29.8543, 77.8880],
-        "zoom":        14,
+        "zoom":        15,
         "river":       "Ganga Canal",
         "risk":        "Moderate",
         "description": "Upper Ganga canal overflow during heavy rainfall",
-        "flood_bbox":  [77.880, 29.847, 77.898, 29.862],
+        "flood_bbox":  [77.870, 29.840, 77.905, 29.868],
     },
 }
 
@@ -188,7 +183,7 @@ def fetch_real_buildings(place_name, bbox):
     try:
         minx, miny, maxx, maxy = bbox
         query = (
-            "[out:json][timeout:30];"
+            "[out:json][timeout:60];"
             "(way[\"building\"]"
             "(" + str(miny) + "," + str(minx) + ","
             + str(maxy) + "," + str(maxx) + ");"
@@ -200,7 +195,7 @@ def fetch_real_buildings(place_name, bbox):
         response = requests.post(
             "https://overpass-api.de/api/interpreter",
             data={"data": query},
-            timeout=30
+            timeout=60
         )
         data = response.json()
         buildings = []
@@ -228,16 +223,16 @@ def fetch_real_buildings(place_name, bbox):
 def generate_fallback_buildings(bbox):
     minx, miny, maxx, maxy = bbox
     buildings = []
-    step_x = (maxx - minx) / 8
-    step_y = (maxy - miny) / 6
-    for i in range(8):
-        for j in range(6):
+    step_x = (maxx - minx) / 12
+    step_y = (maxy - miny) / 10
+    for i in range(12):
+        for j in range(10):
             bx = minx + i * step_x + step_x * 0.1
             by = miny + j * step_y + step_y * 0.1
             buildings.append(
                 box(bx, by,
-                    bx + step_x * 0.6,
-                    by + step_y * 0.6))
+                    bx + step_x * 0.7,
+                    by + step_y * 0.7))
     return gpd.GeoDataFrame(geometry=buildings, crs="EPSG:4326")
 
 
@@ -246,8 +241,11 @@ def fetch_real_flood_zones(place_name, bbox, river_name):
     try:
         minx, miny, maxx, maxy = bbox
         query = (
-            "[out:json][timeout:30];"
+            "[out:json][timeout:60];"
             "(way[\"waterway\"=\"river\"]"
+            "(" + str(miny) + "," + str(minx) + ","
+            + str(maxy) + "," + str(maxx) + ");"
+            "way[\"waterway\"=\"stream\"]"
             "(" + str(miny) + "," + str(minx) + ","
             + str(maxy) + "," + str(maxx) + ");"
             "way[\"natural\"=\"water\"]"
@@ -255,13 +253,16 @@ def fetch_real_flood_zones(place_name, bbox, river_name):
             + str(maxy) + "," + str(maxx) + ");"
             "way[\"landuse\"=\"reservoir\"]"
             "(" + str(miny) + "," + str(minx) + ","
+            + str(maxy) + "," + str(maxx) + ");"
+            "relation[\"natural\"=\"water\"]"
+            "(" + str(miny) + "," + str(minx) + ","
             + str(maxy) + "," + str(maxx) + "););"
             "out geom;"
         )
         response = requests.post(
             "https://overpass-api.de/api/interpreter",
             data={"data": query},
-            timeout=30
+            timeout=60
         )
         data = response.json()
         water_polys = []
@@ -275,8 +276,16 @@ def fetch_real_flood_zones(place_name, bbox, river_name):
                     try:
                         poly = Polygon(coords)
                         if poly.is_valid and not poly.is_empty:
-                            buffered = poly.buffer(0.003)
+                            buffered = poly.buffer(0.004)
                             water_polys.append(buffered)
+                    except Exception:
+                        pass
+                elif len(coords) >= 2:
+                    try:
+                        from shapely.geometry import LineString
+                        line = LineString(coords)
+                        buffered = line.buffer(0.004)
+                        water_polys.append(buffered)
                     except Exception:
                         pass
         if water_polys:
@@ -291,10 +300,10 @@ def generate_fallback_flood(bbox):
     minx, miny, maxx, maxy = bbox
     cx = (minx + maxx) / 2
     flood_poly = Polygon([
-        (cx - 0.005, miny + 0.002),
-        (cx + 0.005, miny + 0.002),
-        (cx + 0.008, maxy - 0.002),
-        (cx - 0.008, maxy - 0.002),
+        (cx - 0.006, miny + 0.002),
+        (cx + 0.006, miny + 0.002),
+        (cx + 0.009, maxy - 0.002),
+        (cx - 0.009, maxy - 0.002),
     ])
     return gpd.GeoDataFrame(
         geometry=[flood_poly], crs="EPSG:4326")
@@ -341,7 +350,7 @@ def get_risk_level(building_geom, flood_gdf):
 
 def impact_chart(total_buildings, flooded_buildings):
     safe = total_buildings - flooded_buildings
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
     fig.patch.set_facecolor("white")
     sizes  = [flooded_buildings, safe]
     colors = ["#E24B4A", "#9FE1CB"]
@@ -501,26 +510,25 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
     for idx, row in buildings_gdf.iterrows():
         if idx not in flooded_idx:
             safe_count += 1
-            if safe_count <= 100:
-                c = row.geometry.centroid
-                folium.GeoJson(
-                    row.geometry.__geo_interface__,
-                    style_function=lambda x: {
-                        "fillColor": "#00dd77",
-                        "color": "#009944",
-                        "weight": 1.5,
-                        "fillOpacity": 0.7
-                    },
-                    tooltip="Safe Building",
-                    popup=folium.Popup(
-                        "<div style='font-family:Arial;"
-                        "width:180px'>"
-                        "<b style='color:green'>Safe Building</b>"
-                        "<hr>Status: Outside flood zone<br>"
-                        "Lat: " + str(round(c.y, 5)) + "<br>"
-                        "Lon: " + str(round(c.x, 5)) + "</div>",
-                        max_width=200)
-                ).add_to(safe_layer)
+            c = row.geometry.centroid
+            folium.GeoJson(
+                row.geometry.__geo_interface__,
+                style_function=lambda x: {
+                    "fillColor": "#00dd77",
+                    "color": "#009944",
+                    "weight": 1.5,
+                    "fillOpacity": 0.7
+                },
+                tooltip="Safe Building",
+                popup=folium.Popup(
+                    "<div style='font-family:Arial;"
+                    "width:180px'>"
+                    "<b style='color:green'>Safe Building</b>"
+                    "<hr>Status: Outside flood zone<br>"
+                    "Lat: " + str(round(c.y, 5)) + "<br>"
+                    "Lon: " + str(round(c.x, 5)) + "</div>",
+                    max_width=200)
+            ).add_to(safe_layer)
     safe_layer.add_to(m)
 
     high_bld = folium.FeatureGroup(
@@ -531,14 +539,12 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         name="Low Risk Buildings", show=True)
 
     for i, (idx, row) in enumerate(flooded_gdf.iterrows()):
-        if i > 150:
-            break
         c    = row.geometry.centroid
         risk = get_risk_level(row.geometry, flood_gdf)
         cfg  = {
             "high": (
                 "#ff2222", "#aa0000", "HIGH RISK", "red",
-                high_bld, "Immediate evacuation required!"),
+                high_bld, "Immediate evacuation required"),
             "moderate": (
                 "#ffbb00", "#cc8800", "MODERATE RISK", "orange",
                 mod_bld, "Monitor closely, prepare to evacuate"),
@@ -579,7 +585,7 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         ).add_to(target)
 
         folium.CircleMarker(
-            location=[c.y, c.x], radius=7,
+            location=[c.y, c.x], radius=6,
             color=border, fill=True,
             fill_color=fill, fill_opacity=0.95,
             tooltip=label + " #" + str(i + 1),
@@ -611,49 +617,106 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
                 [lat2, lon2],
                 icon=folium.DivIcon(
                     html=(
-                        "<div style='font-size:16px;"
+                        "<div style='font-size:14px;"
                         "color:#00eeff;"
-                        "text-shadow:0 0 4px #000'>v</div>"
+                        "text-shadow:0 0 4px #000;"
+                        "font-weight:bold'>v</div>"
                     ),
-                    icon_size=(18, 18),
-                    icon_anchor=(9, 9))
+                    icon_size=(14, 14),
+                    icon_anchor=(7, 7))
             ).add_to(flow_layer)
     flow_layer.add_to(m)
 
-    legend_html = (
-        "<div style='position:fixed;bottom:30px;right:8px;"
-        "background:rgba(5,10,20,0.93);border-radius:12px;"
-        "padding:14px 18px;z-index:9999;color:white;"
-        "font-family:Arial;font-size:12px;"
-        "border:1px solid #2a2a3a;min-width:200px;'>"
-        "<b style='font-size:13px'>Map Legend</b>"
-        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
-        "<b style='font-size:11px;color:#aaa'>ZONES</b><br>"
-        "<span style='color:#0055ff'>xx</span> Flood Zone<br>"
-        "<span style='color:#ff0000'>xx</span> High Risk Core<br>"
-        "<span style='color:#ffcc00'>xx</span> Moderate Risk<br>"
-        "<span style='color:#ff8800'>xx</span> Low Risk Zone<br>"
-        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
-        "<b style='font-size:11px;color:#aaa'>BUILDINGS</b><br>"
-        "<span style='color:#ff2222'>o</span> High Risk<br>"
-        "<span style='color:#ffbb00'>o</span> Moderate Risk<br>"
-        "<span style='color:#ff7700'>o</span> Low Risk<br>"
-        "<span style='color:#00dd77'>s</span> Safe<br>"
-        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
-        "<span style='color:#00eeff'>v</span> Water Flow<br>"
-        "<hr style='margin:7px 0;border-color:#2a2a3a'>"
-        "<small style='color:#888'>"
-        "Click buildings for details</small></div>"
-    )
+    # Toggleable legend in bottom-right corner
+    legend_html = """
+    <div id="legend-container" style="
+        position: fixed;
+        bottom: 40px;
+        right: 10px;
+        z-index: 9999;
+        font-family: Arial;
+        font-size: 12px;
+    ">
+        <button onclick="toggleLegend()" style="
+            background: rgba(10,15,30,0.95);
+            color: white;
+            border: 1px solid #3a3a5a;
+            border-radius: 8px 8px 0 0;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            width: 100%;
+            text-align: left;
+            letter-spacing: 0.5px;
+        ">
+            Map Legend  &#9660;
+        </button>
+        <div id="legend-body" style="
+            background: rgba(5,10,20,0.96);
+            border-radius: 0 0 10px 10px;
+            padding: 12px 16px;
+            color: white;
+            border: 1px solid #2a2a3a;
+            border-top: none;
+            min-width: 185px;
+            display: block;
+        ">
+            <b style="font-size:11px;color:#8ab4f8;
+            letter-spacing:1px">ZONES</b><br>
+            <span style="color:#3366ff;font-size:15px">
+            &#9646;</span> Flood Zone<br>
+            <span style="color:#ff2222;font-size:15px">
+            &#9646;</span> High Risk Core<br>
+            <span style="color:#ffcc00;font-size:15px">
+            &#9646;</span> Moderate Risk<br>
+            <span style="color:#ff8800;font-size:15px">
+            &#9646;</span> Low Risk Zone<br>
+            <hr style="margin:7px 0;border-color:#2a2a4a">
+            <b style="font-size:11px;color:#8ab4f8;
+            letter-spacing:1px">BUILDINGS</b><br>
+            <span style="color:#ff2222;font-size:13px">
+            &#9679;</span> High Risk<br>
+            <span style="color:#ffbb00;font-size:13px">
+            &#9679;</span> Moderate Risk<br>
+            <span style="color:#ff7700;font-size:13px">
+            &#9679;</span> Low Risk<br>
+            <span style="color:#00dd77;font-size:13px">
+            &#9632;</span> Safe Building<br>
+            <hr style="margin:7px 0;border-color:#2a2a4a">
+            <span style="color:#00eeff">&#9660;</span>
+            Water Flow Direction<br>
+            <hr style="margin:7px 0;border-color:#2a2a4a">
+            <small style="color:#888">
+            Click buildings for details</small>
+        </div>
+    </div>
+    <script>
+    function toggleLegend() {
+        var body = document.getElementById("legend-body");
+        var btn  = document.querySelector(
+            "#legend-container button");
+        if (body.style.display === "none") {
+            body.style.display = "block";
+            btn.innerHTML = "Map Legend  &#9660;";
+        } else {
+            body.style.display = "none";
+            btn.innerHTML = "Map Legend  &#9650;";
+        }
+    }
+    </script>
+    """
     m.get_root().html.add_child(folium.Element(legend_html))
+
     plugins.Fullscreen(position="topleft").add_to(m)
     plugins.MiniMap(
         toggle_display=True, position="bottomleft",
-        width=130, height=130, zoom_level_offset=-5).add_to(m)
+        width=120, height=120, zoom_level_offset=-5).add_to(m)
     plugins.MousePosition(
-        position="bottomright", prefix="Coordinates: ").add_to(m)
+        position="bottomright",
+        prefix="Coordinates: ").add_to(m)
     folium.LayerControl(
-        position="topright", collapsed=False).add_to(m)
+        position="topright", collapsed=True).add_to(m)
     return m
 
 
@@ -663,15 +726,15 @@ def analyse_rainfall(mm, hours):
         return None
     if mm < 25:
         return {
-            "risk": "Low", "emoji": "Low Risk",
+            "risk": "Low",
             "color": "#2ecc71",
             "advice": "Light rainfall. Minimal flood risk.",
-            "expected": "Less than 5%",
+            "expected": "Less than 5 percent",
             "intensity": round(intensity, 2)
         }
     elif mm < 65:
         return {
-            "risk": "Moderate", "emoji": "Moderate Risk",
+            "risk": "Moderate",
             "color": "#f39c12",
             "advice": "Some areas may experience waterlogging.",
             "expected": "5 to 20 percent",
@@ -679,7 +742,7 @@ def analyse_rainfall(mm, hours):
         }
     elif mm < 115:
         return {
-            "risk": "High", "emoji": "High Risk",
+            "risk": "High",
             "color": "#e74c3c",
             "advice": "Heavy rainfall! Significant flood risk.",
             "expected": "20 to 50 percent",
@@ -687,9 +750,9 @@ def analyse_rainfall(mm, hours):
         }
     else:
         return {
-            "risk": "Extreme", "emoji": "Extreme Risk",
+            "risk": "Extreme",
             "color": "#c0392b",
-            "advice": "Extreme rainfall! Immediate evacuation advised.",
+            "advice": "Extreme rainfall! Immediate evacuation.",
             "expected": "More than 50 percent",
             "intensity": round(intensity, 2)
         }
@@ -760,26 +823,30 @@ if rainfall_mm > 0:
         rc1.markdown(
             "<div class='metric-card rain-card'>"
             "<div class='label'>Rainfall</div>"
-            "<div class='value'>" + str(rainfall_mm) + "mm</div>"
+            "<div class='value'>"
+            + str(rainfall_mm) + "mm</div>"
             "<div class='sub'>Total</div></div>",
             unsafe_allow_html=True)
         rc2.markdown(
             "<div class='metric-card rain-card'>"
             "<div class='label'>Duration</div>"
-            "<div class='value'>" + str(rainfall_hours) + "h</div>"
+            "<div class='value'>"
+            + str(rainfall_hours) + "h</div>"
             "<div class='sub'>Hours</div></div>",
             unsafe_allow_html=True)
         rc3.markdown(
             "<div class='metric-card rain-card'>"
             "<div class='label'>Intensity</div>"
-            "<div class='value'>" + str(r["intensity"]) + "</div>"
+            "<div class='value'>"
+            + str(r["intensity"]) + "</div>"
             "<div class='sub'>mm per hour</div></div>",
             unsafe_allow_html=True)
         rc4.markdown(
             "<div class='metric-card rain-card'>"
             "<div class='label'>Risk</div>"
             "<div class='value'>!</div>"
-            "<div class='sub' style='color:" + r["color"] + "'>"
+            "<div class='sub' style='color:"
+            + r["color"] + "'>"
             + r["risk"] + "</div></div>",
             unsafe_allow_html=True)
         st.markdown(
@@ -800,19 +867,22 @@ if run_btn:
     loc  = UTTARAKHAND_LOCATIONS[selected]
     bbox = loc["flood_bbox"]
     with st.spinner(
-            "Fetching real flood zones for " + selected + "..."):
+            "Fetching real flood zones for "
+            + selected + "..."):
         flood_gdf = fetch_real_flood_zones(
             loc["place"], bbox, loc["river"])
     with st.spinner(
             "Fetching real buildings from OpenStreetMap..."):
         buildings_gdf = fetch_real_buildings(
             loc["place"], bbox)
-    with st.spinner("Running spatial intersection analysis..."):
+    with st.spinner(
+            "Running spatial intersection analysis..."):
         flooded_gdf = find_flooded_buildings(
             buildings_gdf, flood_gdf)
     with st.spinner("Building interactive map..."):
         map_obj  = create_map(
-            flood_gdf, buildings_gdf, flooded_gdf, selected)
+            flood_gdf, buildings_gdf,
+            flooded_gdf, selected)
         map_html = map_obj._repr_html_()
 
     total   = len(buildings_gdf)
@@ -873,7 +943,7 @@ if st.session_state.done:
         " Over 70 percent inside flood zone — Evacuate now<br>"
         "<span class='risk-badge badge-moderate'>"
         "Moderate Risk</span>"
-        " 30 to 70 percent inside flood zone — Monitor closely<br>"
+        " 30 to 70 percent inside flood zone — Monitor<br>"
         "<span class='risk-badge badge-low'>Low Risk</span>"
         " Under 30 percent inside flood zone — Stay alert<br>"
         "<span class='risk-badge badge-safe'>Safe</span>"
@@ -883,22 +953,19 @@ if st.session_state.done:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    st.markdown(
-        "<div class='section-title' style='color:white;"
-        "font-size:1.1rem;font-weight:700;"
-        "padding-left:12px;border-left:3px solid #1a6bff'>"
-        "Interactive Flood Map"
-        "<small style='font-size:0.75rem;opacity:0.6;"
-        "font-weight:400'>"
-        " Switch: Satellite / Street / Terrain"
-        "</small></div>",
-        unsafe_allow_html=True)
+    # Map and Chart same size side by side
+    map_col, chart_col = st.columns(2)
 
-    map_col, info_col = st.columns([3, 2])
     with map_col:
+        st.markdown(
+            "<div class='section-title' style='color:white;"
+            "font-size:1rem;font-weight:700'>"
+            "Interactive Flood Map</div>",
+            unsafe_allow_html=True)
         st.components.v1.html(
-            st.session_state.map_html, height=500)
-    with info_col:
+            st.session_state.map_html, height=480)
+
+    with chart_col:
         st.markdown(
             "<div class='section-title' style='color:white;"
             "font-size:1rem;font-weight:700'>"
@@ -906,20 +973,29 @@ if st.session_state.done:
             unsafe_allow_html=True)
         fig = impact_chart(total, flooded)
         st.pyplot(fig)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
         st.markdown(
-            "<div class='section-box' style='margin-top:12px'>"
-            "<div style='color:#ccc;font-size:0.83rem'>"
-            "<b style='color:white'>How to use the map:</b><br>"
-            "<div class='step-box'>"
-            "1. Switch Satellite / Street / Terrain</div>"
-            "<div class='step-box'>"
-            "2. Click buildings for risk details</div>"
-            "<div class='step-box'>"
-            "3. Toggle layers with checkboxes</div>"
-            "<div class='step-box'>"
-            "4. Fullscreen button top-left</div>"
-            "<div class='step-box'>"
-            "5. Mini-map bottom-left for position</div>"
+            "<div class='section-box'>"
+            "<div style='color:#ccc;font-size:0.85rem'>"
+            "<b style='color:white'>District Info</b><br><br>"
+            "<b>District:</b> "
+            + st.session_state.place + "<br>"
+            "<b>River:</b> "
+            + st.session_state.river + "<br>"
+            "<b>Total Buildings:</b> "
+            + str(total) + "<br>"
+            "<b>Flooded:</b> "
+            + str(flooded) + " (" + str(pct) + "%)<br>"
+            "<b>Safe:</b> "
+            + str(safe) + " ("
+            + str(100 - pct) + "%)<br><br>"
+            "<b style='color:white'>Data Source</b><br>"
+            "<small style='color:#888'>"
+            "Live data from OpenStreetMap<br>"
+            "River data from Overpass API<br>"
+            "Updated every hour</small>"
             "</div></div>",
             unsafe_allow_html=True)
 
