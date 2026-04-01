@@ -1,8 +1,11 @@
 import sys
 import os
+import io
+import base64
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 import streamlit as st
+import streamlit.components.v1 as components
 import folium
 from folium import plugins
 import geopandas as gpd
@@ -1080,13 +1083,12 @@ if st.session_state.done:
         "font-size:1rem;font-weight:700'>"
         "🗺️ Interactive Flood Map</div>",
         unsafe_allow_html=True)
-    st.components.v1.html(
-        st.session_state.map_html, height=520)
+    components.html(
+        st.session_state.map_html, height=500, scrolling=False)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
     # ── CHART + DISTRICT INFO SIDE BY SIDE — EQUAL HEIGHT ────────────────────
-    import io, base64 as _b64
     chart_col, info_col = st.columns(2)
 
     with chart_col:
@@ -1095,7 +1097,7 @@ if st.session_state.done:
         fig.savefig(buf, format="png", bbox_inches="tight",
                     facecolor="white", dpi=110)
         buf.seek(0)
-        img_b64 = _b64.b64encode(buf.read()).decode()
+        img_b64 = base64.b64encode(buf.read()).decode()
         plt.close(fig)
         st.markdown(
             "<div class='chart-panel'>"
