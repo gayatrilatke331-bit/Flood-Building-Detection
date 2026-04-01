@@ -74,8 +74,33 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 .district-info-card {
     background: #111827; border-radius: 12px;
     padding: 20px; color: white;
-    border: 1px solid #1f2937; height: 100%;
+    border: 1px solid #1f2937;
+    height: 420px;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
+.chart-panel {
+    background: #111827; border-radius: 12px;
+    padding: 16px 20px; border: 1px solid #1f2937;
+    height: 420px;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+}
+.panel-title {
+    font-size: 1rem; font-weight: 700; color: white;
+    margin-bottom: 10px; padding-bottom: 8px;
+    border-bottom: 2px solid #1a6bff;
+    letter-spacing: 0.3px;
+}
+.info-row {
+    display: flex; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid #1f2937;
+    font-size: 0.88rem;
+}
+.info-row:last-child { border-bottom: none; }
+.info-label { color: #94a3b8; width: 52%; }
+.info-value { font-weight: 700; width: 48%; text-align: right; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -722,7 +747,81 @@ def create_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
         position="bottomright",
         prefix="📍 Coordinates: ").add_to(m)
     folium.LayerControl(
-        position="topright", collapsed=True).add_to(m)
+        position="topright", collapsed=False).add_to(m)
+
+    # ── Dark-themed layer control override ───────────────────────────────────
+    dark_layer_css = """
+    <style>
+    .leaflet-control-layers {
+        background: rgba(8, 12, 24, 0.97) !important;
+        border: 1px solid #1e3a5f !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.7) !important;
+        min-width: 200px !important;
+        overflow: hidden !important;
+    }
+    .leaflet-control-layers-toggle {
+        background-color: rgba(8,12,24,0.97) !important;
+        border-radius: 10px !important;
+        border: 1px solid #1e3a5f !important;
+        width: 36px !important; height: 36px !important;
+    }
+    .leaflet-control-layers-expanded {
+        padding: 10px 14px 14px !important;
+    }
+    .leaflet-control-layers-separator {
+        border-top: 1px solid #1e3a5f !important;
+        margin: 7px 0 !important;
+    }
+    .leaflet-control-layers label,
+    .leaflet-control-layers-base label,
+    .leaflet-control-layers-overlays label {
+        color: #e2e8f0 !important;
+        font-family: 'Inter', Arial, sans-serif !important;
+        font-size: 12.5px !important;
+        font-weight: 500 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 3px 0 !important;
+        cursor: pointer !important;
+    }
+    .leaflet-control-layers label:hover { color: #93c5fd !important; }
+    .leaflet-control-layers input[type="checkbox"],
+    .leaflet-control-layers input[type="radio"] {
+        accent-color: #3b82f6 !important;
+        width: 13px !important; height: 13px !important;
+        cursor: pointer !important;
+    }
+    .leaflet-control-layers-base::before {
+        content: "BASE MAPS";
+        display: block;
+        color: #60a5fa;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+        margin-bottom: 6px;
+        font-family: 'Inter', Arial, sans-serif;
+    }
+    .leaflet-control-layers-overlays::before {
+        content: "LAYERS";
+        display: block;
+        color: #60a5fa;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+        margin-bottom: 6px;
+        margin-top: 2px;
+        font-family: 'Inter', Arial, sans-serif;
+    }
+    .leaflet-control-layers-list::-webkit-scrollbar { width: 4px; }
+    .leaflet-control-layers-list::-webkit-scrollbar-track {
+        background: #0d1117; }
+    .leaflet-control-layers-list::-webkit-scrollbar-thumb {
+        background: #1e3a5f; border-radius: 4px; }
+    </style>
+    """
+    m.get_root().html.add_child(folium.Element(dark_layer_css))
     return m
 
 
@@ -986,54 +1085,80 @@ if st.session_state.done:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── CHART + DISTRICT INFO SIDE BY SIDE (BELOW MAP) ───────────────────────
+    # ── CHART + DISTRICT INFO SIDE BY SIDE — EQUAL HEIGHT ────────────────────
+    import io, base64 as _b64
     chart_col, info_col = st.columns(2)
 
     with chart_col:
-        st.markdown(
-            "<div class='section-title' style='color:white;"
-            "font-size:1rem;font-weight:700'>"
-            "📊 Impact Summary</div>",
-            unsafe_allow_html=True)
         fig = impact_chart(total, flooded)
-        st.pyplot(fig)
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", bbox_inches="tight",
+                    facecolor="white", dpi=110)
+        buf.seek(0)
+        img_b64 = _b64.b64encode(buf.read()).decode()
+        plt.close(fig)
+        st.markdown(
+            "<div class='chart-panel'>"
+            "<div class='panel-title'>📊 Impact Summary</div>"
+            "<img src='data:image/png;base64," + img_b64 + "' "
+            "style='width:100%;border-radius:8px;object-fit:contain'>"
+            "</div>",
+            unsafe_allow_html=True)
 
     with info_col:
-        st.markdown(
-            "<div class='section-title' style='color:white;"
-            "font-size:1rem;font-weight:700'>"
-            "📋 District Information</div>",
-            unsafe_allow_html=True)
+        loc_risk     = UTTARAKHAND_LOCATIONS[st.session_state.place]["risk"]
+        risk_col_map = {"Extreme":"#ff2222","High":"#ffaa00",
+                        "Moderate":"#ffcc00","Low":"#00cc66"}
+        risk_emo_map = {"Extreme":"🆘","High":"🔴",
+                        "Moderate":"🟡","Low":"🟢"}
+        rcol = risk_col_map.get(loc_risk, "#ffffff")
+        remo = risk_emo_map.get(loc_risk, "⚠️")
         st.markdown(
             "<div class='district-info-card'>"
-            "<p style='font-size:1rem;font-weight:700;"
-            "color:white;margin-bottom:12px'>"
-            "📍 " + st.session_state.place + "</p>"
-            "<hr style='border-color:#1f2937;margin:8px 0'>"
-            "<table style='width:100%;font-size:0.9rem;"
-            "color:#ccc;border-collapse:collapse'>"
-            "<tr><td style='padding:6px 0'>🏙️ <b style='color:white'>District</b></td>"
-            "<td style='color:#8ab4f8'>" + st.session_state.place + "</td></tr>"
-            "<tr><td style='padding:6px 0'>🌊 <b style='color:white'>River</b></td>"
-            "<td style='color:#8ab4f8'>" + st.session_state.river + "</td></tr>"
-            "<tr><td style='padding:6px 0'>🏢 <b style='color:white'>Total Buildings</b></td>"
-            "<td style='color:#3498db;font-weight:700'>" + str(total) + "</td></tr>"
-            "<tr><td style='padding:6px 0'>🌊 <b style='color:white'>Flooded</b></td>"
-            "<td style='color:#e74c3c;font-weight:700'>"
-            + str(flooded) + " <small>(" + str(pct) + "%)</small></td></tr>"
-            "<tr><td style='padding:6px 0'>✅ <b style='color:white'>Safe</b></td>"
-            "<td style='color:#2ecc71;font-weight:700'>"
-            + str(safe) + " <small>(" + str(100 - pct) + "%)</small></td></tr>"
-            "</table>"
-            "<hr style='border-color:#1f2937;margin:12px 0'>"
-            "<p style='font-size:0.85rem;font-weight:700;"
-            "color:white;margin-bottom:6px'>📡 Data Source</p>"
-            "<p style='font-size:0.78rem;color:#888;margin:2px 0'>"
-            "🌍 Live data from OpenStreetMap</p>"
-            "<p style='font-size:0.78rem;color:#888;margin:2px 0'>"
-            "🏞️ River data from Overpass API</p>"
-            "<p style='font-size:0.78rem;color:#888;margin:2px 0'>"
+            "<div class='panel-title'>📋 District Information</div>"
+            "<div style='background:linear-gradient(90deg,#0f2027,#1a2a3a);"
+            "border-radius:8px;padding:10px 14px;margin-bottom:14px;"
+            "border-left:3px solid #1a6bff'>"
+            "<span style='font-size:1.05rem;font-weight:700;color:white'>"
+            "📍 " + st.session_state.place + "</span>"
+            "</div>"
+            "<div class='info-row'>"
+            "<span class='info-label'>🏙️ District</span>"
+            "<span class='info-value' style='color:#8ab4f8'>"
+            + st.session_state.place + "</span></div>"
+            "<div class='info-row'>"
+            "<span class='info-label'>🌊 River</span>"
+            "<span class='info-value' style='color:#8ab4f8'>"
+            + st.session_state.river + "</span></div>"
+            "<div class='info-row'>"
+            "<span class='info-label'>⚠️ Flood Risk</span>"
+            "<span class='info-value' style='color:" + rcol + "'>"
+            + remo + " " + loc_risk + "</span></div>"
+            "<div class='info-row'>"
+            "<span class='info-label'>🏢 Total Buildings</span>"
+            "<span class='info-value' style='color:#3498db'>"
+            + str(total) + "</span></div>"
+            "<div class='info-row'>"
+            "<span class='info-label'>🌊 Flooded</span>"
+            "<span class='info-value' style='color:#e74c3c'>"
+            + str(flooded) + " <small style='color:#666'>(" + str(pct) + "%)</small>"
+            "</span></div>"
+            "<div class='info-row'>"
+            "<span class='info-label'>✅ Safe</span>"
+            "<span class='info-value' style='color:#2ecc71'>"
+            + str(safe) + " <small style='color:#666'>(" + str(100 - pct) + "%)</small>"
+            "</span></div>"
+            "<div style='margin-top:16px;padding-top:12px;"
+            "border-top:1px solid #1f2937'>"
+            "<p style='font-size:0.76rem;font-weight:800;"
+            "color:#60a5fa;margin:0 0 7px;letter-spacing:1px'>📡 DATA SOURCE</p>"
+            "<p style='font-size:0.76rem;color:#64748b;margin:3px 0'>"
+            "🌍 Live data — OpenStreetMap</p>"
+            "<p style='font-size:0.76rem;color:#64748b;margin:3px 0'>"
+            "🏞️ River data — Overpass API</p>"
+            "<p style='font-size:0.76rem;color:#64748b;margin:3px 0'>"
             "🔄 Updated every hour</p>"
+            "</div>"
             "</div>",
             unsafe_allow_html=True)
 
