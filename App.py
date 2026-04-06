@@ -325,10 +325,14 @@ def make_chart(total, flooded):
     return fig
 
 
-# ── Build map ─────────────────────────────────────────────────────
+# ── Build map (always rebuilt fresh, never stored in session_state) ──
 def build_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
     loc = LOCATIONS[loc_key]
-    m = folium.Map(location=loc["center"], zoom_start=loc["zoom"], tiles="OpenStreetMap")
+    m = folium.Map(
+        location=loc["center"],
+        zoom_start=loc["zoom"],
+        tiles="OpenStreetMap"
+    )
 
     folium.TileLayer(
         tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -340,7 +344,10 @@ def build_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
     for _, row in flood_gdf.iterrows():
         folium.GeoJson(
             row.geometry.__geo_interface__,
-            style_function=lambda x: {"fillColor": "#0055ff", "color": "#0033aa", "weight": 2.5, "fillOpacity": 0.4},
+            style_function=lambda x: {
+                "fillColor": "#0055ff", "color": "#0033aa",
+                "weight": 2.5, "fillOpacity": 0.4
+            },
             tooltip="Flood Zone — {} River".format(loc["river"])
         ).add_to(flood_fg)
     flood_fg.add_to(m)
@@ -353,7 +360,10 @@ def build_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             if not core.is_empty:
                 folium.GeoJson(
                     core.__geo_interface__,
-                    style_function=lambda x: {"fillColor": "#ff0000", "color": "#cc0000", "weight": 1.5, "fillOpacity": 0.4},
+                    style_function=lambda x: {
+                        "fillColor": "#ff0000", "color": "#cc0000",
+                        "weight": 1.5, "fillOpacity": 0.4
+                    },
                     tooltip="HIGH RISK — Core flood area"
                 ).add_to(high_fg)
         except Exception:
@@ -368,7 +378,10 @@ def build_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             if not ring.is_empty:
                 folium.GeoJson(
                     ring.__geo_interface__,
-                    style_function=lambda x: {"fillColor": "#ffcc00", "color": "#cc9900", "weight": 1.5, "fillOpacity": 0.25},
+                    style_function=lambda x: {
+                        "fillColor": "#ffcc00", "color": "#cc9900",
+                        "weight": 1.5, "fillOpacity": 0.25
+                    },
                     tooltip="MODERATE RISK — Buffer zone"
                 ).add_to(mod_fg)
         except Exception:
@@ -383,7 +396,10 @@ def build_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             if not ring.is_empty:
                 folium.GeoJson(
                     ring.__geo_interface__,
-                    style_function=lambda x: {"fillColor": "#ff8800", "color": "#cc6600", "weight": 1, "fillOpacity": 0.15},
+                    style_function=lambda x: {
+                        "fillColor": "#ff8800", "color": "#cc6600",
+                        "weight": 1, "fillOpacity": 0.15
+                    },
                     tooltip="LOW RISK — Watch zone"
                 ).add_to(low_fg)
         except Exception:
@@ -401,10 +417,14 @@ def build_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
                 c = row.geometry.centroid
                 folium.GeoJson(
                     row.geometry.__geo_interface__,
-                    style_function=lambda x: {"fillColor": "#00dd77", "color": "#009944", "weight": 1.5, "fillOpacity": 0.7},
+                    style_function=lambda x: {
+                        "fillColor": "#00dd77", "color": "#009944",
+                        "weight": 1.5, "fillOpacity": 0.7
+                    },
                     tooltip="Safe Building",
                     popup=folium.Popup(
-                        "<b style='color:green'>Safe Building</b><br>Lat: {:.5f}<br>Lon: {:.5f}".format(c.y, c.x),
+                        "<b style='color:green'>Safe Building</b><br>"
+                        "Lat: {:.5f}<br>Lon: {:.5f}".format(c.y, c.x),
                         max_width=180
                     )
                 ).add_to(safe_fg)
@@ -436,19 +456,25 @@ def build_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             "Building #: {num}<br>District: {dist}<br>River: {river}<br>"
             "Lat: {lat:.5f} | Lon: {lon:.5f}<hr>"
             "<b>Action:</b> {action}</div>"
-        ).format(color=color, label=label, num=i+1, dist=loc_key,
-                 river=loc["river"], lat=c.y, lon=c.x, action=action)
+        ).format(
+            color=color, label=label, num=i+1,
+            dist=loc_key, river=loc["river"],
+            lat=c.y, lon=c.x, action=action
+        )
 
         folium.GeoJson(
             row.geometry.__geo_interface__,
-            style_function=lambda x, f=fill, b=border: {"fillColor": f, "color": b, "weight": 2.5, "fillOpacity": 0.85},
+            style_function=lambda x, f=fill, b=border: {
+                "fillColor": f, "color": b, "weight": 2.5, "fillOpacity": 0.85
+            },
             tooltip="{} — Building #{}".format(label, i+1),
             popup=folium.Popup(popup_html, max_width=220)
         ).add_to(target)
 
         folium.CircleMarker(
             location=[c.y, c.x], radius=7,
-            color=border, fill=True, fill_color=fill, fill_opacity=0.95,
+            color=border, fill=True,
+            fill_color=fill, fill_opacity=0.95,
             tooltip="{} #{}".format(label, i+1),
             popup=folium.Popup(popup_html, max_width=220)
         ).add_to(target)
@@ -470,7 +496,8 @@ def build_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
             lon2 = lon1 + sx * 0.1
             folium.PolyLine(
                 [[lat1, lon1], [lat2, lon2]],
-                color="#00eeff", weight=3, opacity=0.9, tooltip="Water flow direction"
+                color="#00eeff", weight=3, opacity=0.9,
+                tooltip="Water flow direction"
             ).add_to(flow_fg)
             folium.Marker(
                 [lat2, lon2],
@@ -482,7 +509,10 @@ def build_map(flood_gdf, buildings_gdf, flooded_gdf, loc_key):
     flow_fg.add_to(m)
 
     plugins.Fullscreen(position="topleft").add_to(m)
-    plugins.MiniMap(toggle_display=True, position="bottomleft", width=120, height=120, zoom_level_offset=-5).add_to(m)
+    plugins.MiniMap(
+        toggle_display=True, position="bottomleft",
+        width=120, height=120, zoom_level_offset=-5
+    ).add_to(m)
     plugins.MousePosition(position="bottomright", prefix="Coords: ").add_to(m)
     folium.LayerControl(position="topright", collapsed=False).add_to(m)
     return m
@@ -515,7 +545,10 @@ with st.sidebar:
     st.markdown("---")
     selected = st.selectbox("Select District", list(LOCATIONS.keys()), index=0)
     loc = LOCATIONS[selected]
-    risk_color = {"Extreme": "#ff2222", "High": "#ffaa00", "Moderate": "#ffcc00", "Low": "#00cc66"}
+    risk_color = {
+        "Extreme": "#ff2222", "High": "#ffaa00",
+        "Moderate": "#ffcc00", "Low": "#00cc66"
+    }
     rc = risk_color.get(loc["risk"], "#ffffff")
     st.markdown(
         "<div class='loc-card'>"
@@ -523,7 +556,10 @@ with st.sidebar:
         "<small style='opacity:0.7'>{desc}</small><br><br>"
         "<b>River:</b> {river}<br>"
         "<b>Risk:</b> <span style='color:{rc};font-weight:700'>{risk}</span>"
-        "</div>".format(name=selected, desc=loc["description"], river=loc["river"], rc=rc, risk=loc["risk"]),
+        "</div>".format(
+            name=selected, desc=loc["description"],
+            river=loc["river"], rc=rc, risk=loc["risk"]
+        ),
         unsafe_allow_html=True
     )
     st.markdown("---")
@@ -564,7 +600,8 @@ if rainfall_mm > 0:
     )
     rc4.markdown(
         "<div class='metric-card rain-card'><div class='label'>Risk Level</div>"
-        "<div class='value'>{e}</div><div class='sub' style='color:{c}'>{risk}</div></div>".format(
+        "<div class='value'>{e}</div>"
+        "<div class='sub' style='color:{c}'>{risk}</div></div>".format(
             e=r["emoji"], c=r["color"], risk=r["risk"]
         ),
         unsafe_allow_html=True
@@ -582,7 +619,7 @@ if rainfall_mm > 0:
     st.markdown("<br>", unsafe_allow_html=True)
 
 
-# ── Session state ─────────────────────────────────────────────────
+# ── Session state init ────────────────────────────────────────────
 if "done" not in st.session_state:
     st.session_state.done = False
 
@@ -609,23 +646,23 @@ if run_btn:
     with st.spinner("Running spatial intersection analysis..."):
         flooded_gdf = find_flooded(buildings_gdf, flood_gdf)
 
-    with st.spinner("Building interactive map..."):
-        map_obj = build_map(flood_gdf, buildings_gdf, flooded_gdf, selected)
-
     total   = len(buildings_gdf)
     flooded = len(flooded_gdf)
     pct     = round((flooded / total) * 100, 1) if total else 0
     safe    = total - flooded
 
-    st.session_state.done      = True
-    st.session_state.total     = total
-    st.session_state.flooded   = flooded
-    st.session_state.pct       = pct
-    st.session_state.safe      = safe
-    st.session_state.map_obj   = map_obj
-    st.session_state.place     = selected
-    st.session_state.river     = loc["river"]
-    st.session_state.is_real   = is_real
+    # Store GeoDataFrames (serialisable), NOT the map object
+    st.session_state.done         = True
+    st.session_state.total        = total
+    st.session_state.flooded      = flooded
+    st.session_state.pct          = pct
+    st.session_state.safe         = safe
+    st.session_state.place        = selected
+    st.session_state.river        = loc["river"]
+    st.session_state.is_real      = is_real
+    st.session_state.flood_gdf    = flood_gdf
+    st.session_state.buildings_gdf = buildings_gdf
+    st.session_state.flooded_gdf  = flooded_gdf
 
 
 # ── Results ───────────────────────────────────────────────────────
@@ -635,6 +672,7 @@ if st.session_state.done:
     pct     = st.session_state.pct
     safe    = st.session_state.safe
 
+    # Metrics
     st.markdown("### 📊 Impact Metrics")
     m1, m2, m3 = st.columns(3)
     m1.markdown(
@@ -657,6 +695,7 @@ if st.session_state.done:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # Risk classification
     st.markdown("### ⚠️ Risk Classification")
     st.markdown(
         "<div style='background:#111827;border-radius:12px;padding:16px;border:1px solid #1f2937'>"
@@ -670,21 +709,24 @@ if st.session_state.done:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Map rendered with st_folium (fixes the iframe trust error) ──
+    # ── MAP: rebuilt fresh every render from stored GeoDataFrames ──
     st.markdown("### 🗺️ Interactive Flood Map")
-    st_folium(
-        st.session_state.map_obj,
-        width=None,
-        height=560,
-        returned_objects=[]
+    map_obj = build_map(
+        st.session_state.flood_gdf,
+        st.session_state.buildings_gdf,
+        st.session_state.flooded_gdf,
+        st.session_state.place
     )
+    st_folium(map_obj, width=None, height=560, returned_objects=[])
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # Chart
     st.markdown("### 📈 Impact Summary Chart")
     fig = make_chart(total, flooded)
     st.pyplot(fig)
 
+    # Info banner
     is_real  = st.session_state.get("is_real", True)
     data_tag = (
         "<span style='color:#2ecc71'>Real OSM building data</span>"
